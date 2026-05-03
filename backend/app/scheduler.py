@@ -10,28 +10,43 @@ class Scheduler:
         self.slots_per_day = 8 # 8 hours per day
         
     def generate_timetable(self, class_id: Optional[int] = None):
+        from sqlalchemy.orm import joinedload
+        
         # 1. Manage existing schedule
         teacher_busy = set()
         class_busy = set()
         
         if class_id:
             # PARTIAL GENERATION: Only for specific class
-            # Clear entries for this class only
+            print(f"Generating schedule ONLY for class {class_id}...")
+            
+            # Identify entries to DELETE (only for this class)
+            # We first find the course IDs for this class
+            class_course_ids = [c.id for c in self.db.query(models.Course.id).filter(models.Course.class_id == class_id).all()]
+            
+            # Delete entries for this class
             self.db.query(models.ScheduleEntry)\
-                .filter(models.ScheduleEntry.course.has(class_id=class_id))\
+                .filter(models.ScheduleEntry.course_id.in_(class_course_ids))\
                 .delete(synchronize_session=False)
+            self.db.commit() # Commit delete to ensure clean slate for this class
             
-            # Identify other classes' entries to mark as busy
-            existing_entries = self.db.query(models.ScheduleEntry).all()
-            for entry in existing_entries:
-                teacher_busy.add((entry.day, entry.slot, entry.course.teacher_id))
-                class_busy.add((entry.day, entry.slot, entry.course.class_id))
+            # Identify OTHER classes' entries to mark as busy (to avoid teacher/class conflicts)
+            other_entries = self.db.query(models.ScheduleEntry)\
+                .options(joinedload(models.ScheduleEntry.course))\
+                .all()
             
-            # Only get courses for this specific class
+            for entry in other_entries:
+                if entry.course:
+                    teacher_busy.add((entry.day, entry.slot, entry.course.teacher_id))
+                    class_busy.add((entry.day, entry.slot, entry.course.class_id))
+            
+            # Only get courses for this specific class to place
             courses = self.db.query(models.Course).filter(models.Course.class_id == class_id).all()
         else:
             # FULL GENERATION: Clear everything
+            print("Generating FULL school schedule...")
             self.db.query(models.ScheduleEntry).delete()
+            self.db.commit()
             courses = self.db.query(models.Course).all()
         
         # 2. Add teacher busy slots from their availability (global constraints)
@@ -40,9 +55,10 @@ class Scheduler:
             if t.availability:
                 for slot in t.availability:
                     teacher_busy.add((slot['day'], slot['slot'], t.id))
-
+        
         # 3. Placement process
         schedule_entries = []
+        # Shuffle courses to ensure variety in placement
         random.shuffle(courses)
         
         all_slots = []
@@ -54,6 +70,7 @@ class Scheduler:
             hours_to_place = course.weekly_hours
             placed_hours = 0
             
+            # Try to find empty slots
             course_slots = all_slots.copy()
             random.shuffle(course_slots)
             
@@ -61,13 +78,15 @@ class Scheduler:
                 if placed_hours >= hours_to_place:
                     break
                 
-                # Constraints
+                # Check teacher conflict (across ALL classes)
                 if (day, slot, course.teacher_id) in teacher_busy:
                     continue
+                
+                # Check class conflict
                 if (day, slot, course.class_id) in class_busy:
                     continue
                 
-                # Place
+                # SUCCESS: Place the hour
                 teacher_busy.add((day, slot, course.teacher_id))
                 class_busy.add((day, slot, course.class_id))
                 
@@ -80,8 +99,9 @@ class Scheduler:
                 placed_hours += 1
             
             if placed_hours < hours_to_place:
-                print(f"Warning: Could not place all hours for course {course.subject.name} in class {course.class_id}")
-
+                print(f"CRITICAL: Could not place {hours_to_place - placed_hours} hours for {course.subject.name} in class {course.class_id}")
+                # We could raise an error here or just log it
+                
         # 4. Save to DB
         self.db.add_all(schedule_entries)
         self.db.commit()
