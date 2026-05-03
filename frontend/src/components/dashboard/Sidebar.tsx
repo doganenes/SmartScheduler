@@ -35,13 +35,21 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       className={`relative h-screen bg-card border-r border-border transition-all duration-300 flex-col hidden md:flex ${isCollapsed ? 'w-20' : 'w-64'
         }`}
     >
-      <div className="p-6 flex items-center gap-3">
-        <div className="bg-primary p-2 rounded-lg shrink-0">
-          <Calendar className="w-6 h-6 text-primary-foreground" />
+      <div className="p-4 flex items-center justify-between border-b border-border mb-2">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="bg-primary p-2 rounded-lg shrink-0">
+            <Calendar className="w-5 h-5 text-primary-foreground" />
+          </div>
+          {!isCollapsed && (
+            <span className="font-bold text-lg tracking-tight truncate">Scheduler</span>
+          )}
         </div>
-        {!isCollapsed && (
-          <span className="font-bold text-lg tracking-tight truncate">Scheduler</span>
-        )}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-2 text-muted-foreground hover:text-foreground transition-colors hover:bg-muted rounded-lg"
+        >
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
       </div>
 
       <nav className="flex-1 px-3 space-y-1">
@@ -59,31 +67,23 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
                 }`}
             >
               <Icon className="w-5 h-5 shrink-0" />
-              {!isCollapsed && <span className="font-medium">{item.label}</span>}
+              {!isCollapsed && <span className="font-medium text-sm">{item.label}</span>}
             </button>
           );
         })}
       </nav>
 
-      {user && (
-        <div className="p-4 border-t border-border space-y-2">
-          <button
-            onClick={logout}
-            className="w-full flex items-center gap-3 p-3 text-destructive hover:bg-destructive/10 rounded-xl transition-all"
-          >
-            <LogOut className="w-5 h-5 shrink-0" />
-            {!isCollapsed && <span className="font-medium text-sm">Logout</span>}
-          </button>
+      <div className="p-4 border-t border-border mt-auto">
+        <div className={`flex flex-col ${isCollapsed ? 'items-center' : 'items-start'} gap-1`}>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            {new Date().getFullYear()} © Scheduler
+          </p>
+          {!isCollapsed && (
+            <p className="text-[9px] text-muted-foreground/60 font-medium">
+              All Rights Reserved.
+            </p>
+          )}
         </div>
-      )}
-
-      <div className="p-4 border-t border-border flex justify-center">
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-3 text-muted-foreground hover:text-foreground transition-colors hover:bg-muted rounded-xl"
-        >
-          {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-        </button>
       </div>
     </aside>
   );

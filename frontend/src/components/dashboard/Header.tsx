@@ -67,6 +67,13 @@ export function Header({ onRefresh, onGenerate, loading, activeTab, setActiveTab
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               {isRefreshing ? "Refreshing..." : "Refresh"}
             </button>
+            <button
+              onClick={logout}
+              className="inline-flex items-center justify-center rounded-xl p-3 text-destructive hover:bg-destructive/10 border border-transparent hover:border-destructive/20 transition-all"
+              title="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
 
         </div>
