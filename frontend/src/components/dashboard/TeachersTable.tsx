@@ -32,12 +32,12 @@ export function TeachersTable({
   });
 
   const [editingAssignmentId, setEditingAssignmentId] = useState<number | null>(null);
-
   const [assignmentForm, setAssignmentForm] = useState({
     subject_id: subjects[0]?.id || 0,
     class_id: classes[0]?.id || 0,
     weekly_hours: 2
   });
+  const [pendingAssignments, setPendingAssignments] = useState<{ subject_id: number, weekly_hours: number }[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,8 +49,22 @@ export function TeachersTable({
     if (editingTeacher) {
       await onUpdate(editingTeacher.id, data);
     } else {
-      await onCreate(data);
+      const newTeacher = await onCreate(data);
+      if (newTeacher && pendingAssignments.length > 0) {
+        // Create assignments for ALL classes for this new teacher
+        for (const pa of pendingAssignments) {
+          for (const cls of classes) {
+            await onCreateCourse({
+              subject_id: pa.subject_id,
+              teacher_id: newTeacher.id,
+              class_id: cls.id,
+              weekly_hours: pa.weekly_hours
+            });
+          }
+        }
+      }
     }
+    setPendingAssignments([]);
     closeModal();
   };
 
@@ -249,72 +263,71 @@ export function TeachersTable({
                   </form>
                 </div>
 
-                {/* Right Side: Assignments (Only if editing) */}
+                {/* Right Side: Assignments */}
                 <div className="space-y-6">
                   <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Course Assignments (Distributions)</h4>
 
-                  {!editingTeacher ? (
-                    <div className="bg-muted/30 border border-dashed border-border rounded-2xl p-8 text-center text-muted-foreground">
-                      Save teacher first to manage assignments.
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Add Assignment Form */}
-                      <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-bold uppercase text-muted-foreground">Subject</label>
-                            <select
-                              value={assignmentForm.subject_id}
-                              onChange={e => setAssignmentForm({ ...assignmentForm, subject_id: parseInt(e.target.value) })}
-                              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm"
-                            >
-                              {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[10px] font-bold uppercase text-muted-foreground">Weekly Hours (Per Class)</label>
-                            <input
-                              type="number"
-                              min="1" max="10"
-                              value={assignmentForm.weekly_hours}
-                              onChange={e => setAssignmentForm({ ...assignmentForm, weekly_hours: parseInt(e.target.value) })}
-                              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm"
-                            />
-                          </div>
+                  <div className="space-y-4">
+                    {/* Add Assignment Form */}
+                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Subject</label>
+                          <select
+                            value={assignmentForm.subject_id}
+                            onChange={e => setAssignmentForm({ ...assignmentForm, subject_id: parseInt(e.target.value) })}
+                            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm"
+                          >
+                            {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          </select>
                         </div>
-                        <div className="flex flex-col gap-2">
-                          <button
-                            onClick={async () => {
-                              if (!editingTeacher) return;
-                              
-                              if (editingAssignmentId) {
-                                // UPDATE MODE (Single assignment)
-                                await onUpdateCourse(editingAssignmentId, {
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Weekly Hours (Per Class)</label>
+                          <input
+                            type="number"
+                            min="1" max="10"
+                            value={assignmentForm.weekly_hours}
+                            onChange={e => setAssignmentForm({ ...assignmentForm, weekly_hours: parseInt(e.target.value) })}
+                            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={async () => {
+                            if (editingAssignmentId) {
+                              // UPDATE MODE (Single assignment)
+                              await onUpdateCourse(editingAssignmentId, {
+                                subject_id: assignmentForm.subject_id,
+                                teacher_id: editingTeacher?.id || 0,
+                                class_id: assignmentForm.class_id,
+                                weekly_hours: assignmentForm.weekly_hours
+                              });
+                              setEditingAssignmentId(null);
+                            } else if (editingTeacher) {
+                              // ADD MODE for existing teacher (Bulk all classes)
+                              for (const cls of classes) {
+                                await onCreateCourse({
                                   subject_id: assignmentForm.subject_id,
                                   teacher_id: editingTeacher.id,
-                                  class_id: assignmentForm.class_id,
+                                  class_id: cls.id,
                                   weekly_hours: assignmentForm.weekly_hours
                                 });
-                                setEditingAssignmentId(null);
-                              } else {
-                                // ADD MODE (Bulk all classes)
-                                for (const cls of classes) {
-                                  await onCreateCourse({
-                                    subject_id: assignmentForm.subject_id,
-                                    teacher_id: editingTeacher.id,
-                                    class_id: cls.id,
-                                    weekly_hours: assignmentForm.weekly_hours
-                                  });
-                                }
                               }
-                              
-                              setAssignmentForm({
-                                subject_id: subjects[0]?.id || 0,
-                                class_id: classes[0]?.id || 0,
-                                weekly_hours: 2
-                              });
-                            }}
+                            } else {
+                              // ADD MODE for NEW teacher (Local state)
+                              setPendingAssignments([...pendingAssignments, { 
+                                subject_id: assignmentForm.subject_id, 
+                                weekly_hours: assignmentForm.weekly_hours 
+                              }]);
+                            }
+                            
+                            setAssignmentForm({
+                              subject_id: subjects[0]?.id || 0,
+                              class_id: classes[0]?.id || 0,
+                              weekly_hours: 2
+                            });
+                          }}
                             className="w-full bg-primary text-primary-foreground px-4 py-3 rounded-xl text-sm font-bold hover:bg-primary/90 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all"
                           >
                             {editingAssignmentId ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -341,7 +354,8 @@ export function TeachersTable({
 
                       {/* Assignments List */}
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                        {courses.filter(c => c.teacher_id === editingTeacher.id).map(course => (
+                        {/* 1. Existing Assignments (for editing mode) */}
+                        {editingTeacher && courses.filter(c => c.teacher_id === editingTeacher.id).map(course => (
                           <div key={course.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${editingAssignmentId === course.id ? 'bg-primary/5 border-primary ring-1 ring-primary/20' : 'bg-muted/50 border-border'}`}>
                             <div className="flex items-center gap-3">
                               <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${editingAssignmentId === course.id ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'}`}>
@@ -370,14 +384,39 @@ export function TeachersTable({
                             </div>
                           </div>
                         ))}
-                        {courses.filter(c => c.teacher_id === editingTeacher.id).length === 0 && (
+
+                        {/* 2. Pending Assignments (for new teacher mode) */}
+                        {!editingTeacher && pendingAssignments.map((pa, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-3 rounded-xl border bg-primary/5 border-primary/20">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
+                                <GraduationCap className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <div className="font-bold text-sm">{subjects.find(s => s.id === pa.subject_id)?.name}</div>
+                                <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                                  All Classes • {pa.weekly_hours} Hours
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => setPendingAssignments(pendingAssignments.filter((_, i) => i !== idx))}
+                              className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                        {/* Empty State */}
+                        {((editingTeacher && courses.filter(c => c.teacher_id === editingTeacher.id).length === 0) || 
+                          (!editingTeacher && pendingAssignments.length === 0)) && (
                           <div className="text-center py-8 text-muted-foreground text-sm italic">
                             No assignments yet.
                           </div>
                         )}
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>

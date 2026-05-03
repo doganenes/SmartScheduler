@@ -127,8 +127,10 @@ export default function Home() {
       }
 
       if (res.ok) {
+        const createdData = await res.json();
         await fetchData();
         toast.success(`${type.slice(0, -1)} added successfully.`);
+        return createdData;
       } else {
         const errData = await res.json();
         toast.error(errData.detail || `Error adding ${type.slice(0, -1)}.`);
@@ -136,6 +138,7 @@ export default function Home() {
     } catch (err) {
       toast.error("Connection error.");
     }
+    return null;
   };
 
   const handleUpdate = (type: string) => async (id: number, data: any) => {

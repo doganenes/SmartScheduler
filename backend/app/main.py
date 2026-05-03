@@ -88,10 +88,44 @@ def get_classes(db: Session = Depends(get_db)):
 
 @app.post("/classes/", response_model=schemas.Class)
 def create_class(cls: schemas.ClassCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.check_admin)):
+    # 1. Get existing classes before adding new one to check for "global" assignments
+    existing_classes = db.query(models.SchoolClass).all()
+    num_existing = len(existing_classes)
+    
+    # 2. Create the new class
     db_class = models.SchoolClass(**cls.model_dump())
     db.add(db_class)
     db.commit()
     db.refresh(db_class)
+    
+    # 3. Smart Auto-Assignment
+    # If a teacher teaches a subject to ALL existing classes, they should probably teach it to the new one too.
+    if num_existing > 0:
+        from sqlalchemy import func
+        # Find (teacher, subject) pairs that have courses in ALL existing classes
+        global_assignments = db.query(
+            models.Course.teacher_id, 
+            models.Course.subject_id, 
+            func.max(models.Course.weekly_hours).label('hours')
+        ).group_by(
+            models.Course.teacher_id, 
+            models.Course.subject_id
+        ).having(
+            func.count(models.Course.class_id) >= num_existing
+        ).all()
+        
+        for teacher_id, subject_id, hours in global_assignments:
+            new_course = models.Course(
+                teacher_id=teacher_id,
+                subject_id=subject_id,
+                class_id=db_class.id,
+                weekly_hours=hours
+            )
+            db.add(new_course)
+        
+        db.commit()
+        print(f"Auto-assigned {len(global_assignments)} courses to new class: {db_class.name}")
+        
     return db_class
 
 @app.put("/classes/{class_id}", response_model=schemas.Class)
