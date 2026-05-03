@@ -26,7 +26,7 @@ export default function Home() {
   const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const { token, isAdmin, logout } = useAuth();
-  
+
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: number; type: string | null }>({
     isOpen: false,
     id: 0,
@@ -52,7 +52,7 @@ export default function Home() {
           return res.json();
         }))
       );
-      
+
       const [teachersData, classesData, subjectsData, coursesData, scheduleData] = responses;
 
       setTeachers(teachersData || []);
@@ -81,8 +81,8 @@ export default function Home() {
       if (selectedClassId !== 'all') {
         url.searchParams.append('class_id', selectedClassId.toString());
       }
-      
-      const res = await fetch(url.toString(), { 
+
+      const res = await fetch(url.toString(), {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -95,8 +95,8 @@ export default function Home() {
 
       if (res.ok) {
         await fetchData();
-        toast.success(selectedClassId === 'all' 
-          ? "Full school schedule generated!" 
+        toast.success(selectedClassId === 'all'
+          ? "Full school schedule generated!"
           : "Class schedule updated successfully!");
       } else {
         toast.error("Failed to generate schedule.");
@@ -113,7 +113,7 @@ export default function Home() {
     try {
       const res = await fetch(`${API_URL}/${type}/`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
@@ -145,7 +145,7 @@ export default function Home() {
     try {
       const res = await fetch(`${API_URL}/${type}/${id}`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
@@ -172,7 +172,7 @@ export default function Home() {
   const handleDelete = async () => {
     if (!deleteConfirm.type || !deleteConfirm.id) return;
     try {
-      const res = await fetch(`${API_URL}/${deleteConfirm.type}/${deleteConfirm.id}`, { 
+      const res = await fetch(`${API_URL}/${deleteConfirm.type}/${deleteConfirm.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -208,13 +208,13 @@ export default function Home() {
   return (
     <div className="flex flex-col md:flex-row h-screen bg-background overflow-hidden">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      
+
       <main className="flex-1 h-full overflow-y-auto p-4 md:p-8 scroll-smooth">
         <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
-          <Header 
-            onRefresh={fetchData} 
-            onGenerate={generateSchedule} 
-            loading={loading} 
+          <Header
+            onRefresh={fetchData}
+            onGenerate={generateSchedule}
+            loading={loading}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isAdmin={isAdmin()}
@@ -223,21 +223,21 @@ export default function Home() {
           <div className="flex flex-col gap-2 md:gap-6">
             <h2 className="text-2xl md:text-4xl font-bold capitalize tracking-tight text-foreground">{activeTab === 'courses' ? 'Subject' : activeTab} Management</h2>
             {activeTab === 'schedule' && (
-              <ClassSelector 
-                classes={classes} 
-                selectedClassId={selectedClassId} 
-                onSelect={setSelectedClassId} 
+              <ClassSelector
+                classes={classes}
+                selectedClassId={selectedClassId}
+                onSelect={setSelectedClassId}
               />
             )}
           </div>
 
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {activeTab === 'schedule' && (
-              <ScheduleGrid 
-                schedule={schedule} 
-                teachers={teachers} 
-                classes={classes} 
-                selectedClassId={selectedClassId} 
+              <ScheduleGrid
+                schedule={schedule}
+                teachers={teachers}
+                classes={classes}
+                selectedClassId={selectedClassId}
                 onGenerate={generateSchedule}
                 loading={loading}
                 isAdmin={isAdmin()}
@@ -245,8 +245,8 @@ export default function Home() {
             )}
 
             {activeTab === 'teachers' && (
-              <TeachersTable 
-                teachers={teachers} 
+              <TeachersTable
+                teachers={teachers}
                 subjects={subjects}
                 classes={classes}
                 courses={courses}
@@ -256,13 +256,14 @@ export default function Home() {
                 onCreateCourse={handleCreate('courses')}
                 onUpdateCourse={handleUpdate('courses')}
                 onDeleteCourse={(id: number) => setDeleteConfirm({ isOpen: true, id, type: 'courses' })}
-                isAdmin={isAdmin()}
-              />
+                isAdmin={isAdmin()} onRefresh={function (): Promise<void> {
+                  throw new Error('Function not implemented.');
+                }} />
             )}
 
             {activeTab === 'classes' && (
-              <ClassesGrid 
-                classes={classes} 
+              <ClassesGrid
+                classes={classes}
                 onCreate={handleCreate('classes')}
                 onUpdate={handleUpdate('classes')}
                 onDelete={(id: number) => setDeleteConfirm({ isOpen: true, id, type: 'classes' })}
@@ -271,8 +272,8 @@ export default function Home() {
             )}
 
             {activeTab === 'courses' && (
-              <CoursesTable 
-                subjects={subjects} 
+              <CoursesTable
+                subjects={subjects}
                 onCreate={handleCreate('subjects')}
                 onUpdate={handleUpdate('subjects')}
                 onDelete={(id: number) => setDeleteConfirm({ isOpen: true, id, type: 'subjects' })}
@@ -282,7 +283,7 @@ export default function Home() {
           </div>
         </div>
 
-        <ConfirmDialog 
+        <ConfirmDialog
           isOpen={deleteConfirm.isOpen}
           onClose={() => setDeleteConfirm({ isOpen: false, id: 0, type: null })}
           onConfirm={handleDelete}
