@@ -2,6 +2,7 @@ import { Calendar, RefreshCw, User as UserIcon, Menu, X, LayoutDashboard, Users,
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth } from "@/lib/auth";
+import { useState } from 'react';
 
 interface HeaderProps {
   onRefresh: () => Promise<void>;
@@ -43,10 +44,10 @@ export function Header({ onRefresh, onGenerate, loading, activeTab, setActiveTab
               <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">School Management Panel</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2 md:hidden">
             <ThemeToggle />
-            <button 
+            <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2 bg-muted rounded-lg text-foreground"
             >
@@ -58,7 +59,7 @@ export function Header({ onRefresh, onGenerate, loading, activeTab, setActiveTab
         <div className="flex gap-3 items-center w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
           <div className="hidden md:flex gap-3 items-center">
             <ThemeToggle />
-            <button 
+            <button
               onClick={handleRefresh}
               disabled={isRefreshing}
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-colors border border-input bg-background hover:bg-accent h-11 px-6 shadow-sm"
@@ -67,7 +68,7 @@ export function Header({ onRefresh, onGenerate, loading, activeTab, setActiveTab
               {isRefreshing ? "Refreshing..." : "Refresh"}
             </button>
           </div>
-          
+
           {(activeTab === 'schedule' && isAdmin) && (
             <Button size="lg" onClick={onGenerate} disabled={loading} className="gap-2 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 h-11 rounded-xl w-full md:w-auto">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -103,14 +104,14 @@ export function Header({ onRefresh, onGenerate, loading, activeTab, setActiveTab
             })}
           </div>
           <div className="pt-2 border-t border-border flex justify-between items-center">
-             <button 
+            <button
               onClick={handleRefresh}
               className="flex items-center gap-2 text-sm font-medium text-muted-foreground p-2"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               Refresh Data
             </button>
-            <button 
+            <button
               onClick={logout}
               className="flex items-center gap-2 text-sm font-medium text-destructive p-2"
             >
