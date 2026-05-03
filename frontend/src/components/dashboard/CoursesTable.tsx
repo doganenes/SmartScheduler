@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Course, Teacher, SchoolClass } from "@/lib/types";
-import { Edit2, Trash2, Plus, X, BookOpen } from "lucide-react";
+import { Edit2, Trash2, Plus, X } from "lucide-react";
 
 interface CoursesTableProps {
   courses: Course[];
@@ -11,9 +11,10 @@ interface CoursesTableProps {
   onUpdate: (id: number, data: any) => Promise<void>;
   onDelete: (id: number) => void | Promise<void>;
   onCreate: (data: any) => Promise<void>;
+  isAdmin: boolean;
 }
 
-export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, onCreate }: CoursesTableProps) {
+export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, onCreate, isAdmin }: CoursesTableProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState<any | null>(null);
   const [formData, setFormData] = useState({
@@ -66,13 +67,15 @@ export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, o
           <CardTitle>Course Distributions</CardTitle>
           <CardDescription>Manage curriculum and teacher assignments.</CardDescription>
         </div>
-        <button
-          onClick={() => openModal()}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          Add Course
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => openModal()}
+            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            Add Course
+          </button>
+        )}
       </CardHeader>
       <CardContent>
         <Table>
@@ -82,7 +85,7 @@ export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, o
               <TableHead>Class</TableHead>
               <TableHead>Teacher</TableHead>
               <TableHead>Weekly Hours</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              {isAdmin && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -109,22 +112,24 @@ export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, o
                 </TableCell>
                 <TableCell className="text-muted-foreground font-medium">{teachers.find(t => t.id === group.teacher_id)?.name}</TableCell>
                 <TableCell className="font-bold text-primary">{group.weekly_hours} Hours</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => openModal(group)}
-                      className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(group.ids[0])}
-                      className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </TableCell>
+                {isAdmin && (
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openModal(group)}
+                        className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(group.ids[0])}
+                        className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -186,7 +191,6 @@ export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, o
                   className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                 >
                   {teachers.map(t => {
-                    // Calculate teacher capacity
                     const busySlotsCount = t.availability?.length || 0;
                     const maxCapacity = 40 - busySlotsCount;
                     const currentWorkload = courses
@@ -204,9 +208,6 @@ export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, o
                     );
                   })}
                 </select>
-                <p className="text-[10px] text-muted-foreground italic">
-                  Teachers are disabled if their remaining capacity is less than the required weekly hours.
-                </p>
               </div>
 
               <div className="pt-4 flex gap-3">

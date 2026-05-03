@@ -1,9 +1,20 @@
 from .database import SessionLocal, engine
-from . import models
+from . import models, auth
 
 def seed():
     db = SessionLocal()
-    # Check if data already exists
+    # 0. Admin User
+    if not db.query(models.User).filter(models.User.username == "admin").first():
+        admin_user = models.User(
+            username="admin",
+            hashed_password=auth.get_password_hash("admin123"),
+            role=models.UserRole.ADMIN
+        )
+        db.add(admin_user)
+        db.commit()
+        print("Default admin user created: admin / admin123")
+
+    # Check if other data already exists
     if db.query(models.Teacher).first():
         print("Data already exists, skipping seed.")
         return

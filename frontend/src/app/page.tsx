@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/dashboard/ConfirmDialog";
+import { useAuth } from "@/lib/auth";
 
 // Dashboard Components
 import { Header } from '@/components/dashboard/Header';
@@ -11,10 +12,10 @@ import { ScheduleGrid } from '@/components/dashboard/ScheduleGrid';
 import { TeachersTable } from '@/components/dashboard/TeachersTable';
 import { ClassesGrid } from '@/components/dashboard/ClassesGrid';
 import { CoursesTable } from '@/components/dashboard/CoursesTable';
+import { LoginForm } from '@/components/dashboard/LoginForm';
 
 // Types & Constants
 import { Teacher, SchoolClass, Course, ScheduleEntry } from '@/lib/types';
-
 import { Sidebar } from '@/components/dashboard/Sidebar';
 
 export default function Home() {
@@ -23,6 +24,8 @@ export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const { token, isAdmin } = useAuth();
+  
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: number; type: string | null }>({
     isOpen: false,
     id: 0,
@@ -34,8 +37,10 @@ export default function Home() {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (token) {
+      fetchData();
+    }
+  }, [token]);
 
   const fetchData = async () => {
     try {
@@ -64,6 +69,10 @@ export default function Home() {
   };
 
   const generateSchedule = async () => {
+    if (!isAdmin()) {
+      toast.error("Unauthorized: Only admins can generate schedules.");
+      return;
+    }
     setLoading(true);
     try {
       const url = new URL(`${API_URL}/scheduler/generate`);
@@ -71,17 +80,19 @@ export default function Home() {
         url.searchParams.append('class_id', selectedClassId.toString());
       }
       
-      const res = await fetch(url.toString(), { method: 'POST' });
+      const res = await fetch(url.toString(), { 
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (res.ok) {
         await fetchData();
         toast.success(selectedClassId === 'all' 
           ? "Full school schedule generated!" 
           : "Class schedule updated successfully!");
       } else {
-        toast.error("Failed to generate schedule. Please check teacher constraints.");
+        toast.error("Failed to generate schedule.");
       }
     } catch (err) {
-      console.error("An error occurred!", err);
       toast.error("An error occurred while generating the schedule.");
     } finally {
       setLoading(false);
@@ -93,14 +104,18 @@ export default function Home() {
     try {
       const res = await fetch(`${API_URL}/${type}/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(data)
       });
       if (res.ok) {
         await fetchData();
         toast.success(`${type.slice(0, -1)} added successfully.`);
       } else {
-        toast.error(`Error adding ${type.slice(0, -1)}.`);
+        const errData = await res.json();
+        toast.error(errData.detail || `Error adding ${type.slice(0, -1)}.`);
       }
     } catch (err) {
       toast.error("Connection error.");
@@ -111,7 +126,10 @@ export default function Home() {
     try {
       const res = await fetch(`${API_URL}/${type}/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(data)
       });
       if (res.ok) {
@@ -128,7 +146,10 @@ export default function Home() {
   const handleDelete = async () => {
     if (!deleteConfirm.type || !deleteConfirm.id) return;
     try {
-      const res = await fetch(`${API_URL}/${deleteConfirm.type}/${deleteConfirm.id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_URL}/${deleteConfirm.type}/${deleteConfirm.id}`, { 
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (res.ok) {
         await fetchData();
         toast.success(`${deleteConfirm.type.slice(0, -1)} deleted successfully.`);
@@ -142,6 +163,15 @@ export default function Home() {
     }
   };
 
+  // --- UNCONDITIONAL LOGIN VIEW ---
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <LoginForm />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -153,6 +183,7 @@ export default function Home() {
             onGenerate={generateSchedule} 
             loading={loading} 
             activeTab={activeTab}
+            isAdmin={isAdmin()}
           />
 
           <div className="flex flex-col gap-6">
@@ -183,6 +214,7 @@ export default function Home() {
                 onCreate={handleCreate('teachers')}
                 onUpdate={handleUpdate('teachers')}
                 onDelete={(id) => setDeleteConfirm({ isOpen: true, id, type: 'teachers' })}
+                isAdmin={isAdmin()}
               />
             )}
 
@@ -192,6 +224,7 @@ export default function Home() {
                 onCreate={handleCreate('classes')}
                 onUpdate={handleUpdate('classes')}
                 onDelete={(id) => setDeleteConfirm({ isOpen: true, id, type: 'classes' })}
+                isAdmin={isAdmin()}
               />
             )}
 
@@ -203,6 +236,7 @@ export default function Home() {
                 onCreate={handleCreate('courses')}
                 onUpdate={handleUpdate('courses')}
                 onDelete={(id) => setDeleteConfirm({ isOpen: true, id, type: 'courses' })}
+                isAdmin={isAdmin()}
               />
             )}
           </div>

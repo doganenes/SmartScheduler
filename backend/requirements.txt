@@ -6,3 +6,8 @@ python-multipart
 python-dotenv
 alembic
 psycopg2-binary
+passlib[bcrypt]
+python-jose[cryptography]
+bcrypt
+pytest
+httpx

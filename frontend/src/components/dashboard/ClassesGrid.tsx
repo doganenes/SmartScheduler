@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { GraduationCap, Edit2, Trash2, Plus, X } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { SchoolClass } from "@/lib/types";
 
 interface ClassesGridProps {
@@ -8,9 +7,10 @@ interface ClassesGridProps {
   onUpdate: (id: number, data: any) => Promise<void>;
   onDelete: (id: number) => void | Promise<void>;
   onCreate: (data: any) => Promise<void>;
+  isAdmin: boolean;
 }
 
-export function ClassesGrid({ classes, onUpdate, onDelete, onCreate }: ClassesGridProps) {
+export function ClassesGrid({ classes, onUpdate, onDelete, onCreate, isAdmin }: ClassesGridProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClass, setEditingClass] = useState<SchoolClass | null>(null);
   const [formData, setFormData] = useState({ name: '' });
@@ -44,33 +44,37 @@ export function ClassesGrid({ classes, onUpdate, onDelete, onCreate }: ClassesGr
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-muted/30 p-6 rounded-2xl border border-border">
-        <button
-          onClick={() => openModal()}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
-        >
-          <Plus className="w-5 h-5" />
-          Add Class
-        </button>
-      </div>
+      {isAdmin && (
+        <div className="flex justify-between items-center bg-muted/30 p-6 rounded-2xl border border-border">
+          <button
+            onClick={() => openModal()}
+            className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            Add Class
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {classes.map(c => (
           <div key={c.id} className="group p-6 bg-card border border-border rounded-2xl hover:shadow-2xl hover:shadow-primary/5 hover:border-primary/20 transition-all relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={() => openModal(c)}
-                className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => onDelete(c.id)}
-                className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
+            {isAdmin && (
+              <div className="absolute top-0 right-0 p-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => openModal(c)}
+                  className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => onDelete(c.id)}
+                  className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
             <div className="bg-primary/10 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
               <GraduationCap className="w-6 h-6 text-primary" />
             </div>

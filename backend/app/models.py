@@ -1,6 +1,19 @@
+import enum
 from sqlalchemy import Column, Integer, String, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from .database import Base
+
+class UserRole(str, enum.Enum):
+    ADMIN = "ADMIN"
+    EDITOR = "EDITOR"
+    VIEWER = "VIEWER"
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    role = Column(String, default=UserRole.VIEWER)
 
 class Teacher(Base):
     __tablename__ = "teachers"

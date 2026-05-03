@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react";
+import { useAuth } from "@/lib/auth";
 import {
   LayoutDashboard,
   Users,
@@ -8,8 +9,9 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
-  Settings,
-  Calendar
+  Calendar,
+  LogOut,
+  User as UserIcon
 } from "lucide-react";
 
 interface SidebarProps {
@@ -19,6 +21,7 @@ interface SidebarProps {
 
 export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { user, logout } = useAuth();
 
   const menuItems = [
     { id: 'schedule', label: 'Weekly Schedule', icon: LayoutDashboard },
@@ -62,17 +65,39 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         })}
       </nav>
 
+      {user && (
+        <div className="p-4 border-t border-border space-y-2">
+          {!isCollapsed && (
+            <div className="px-3 py-2 flex items-center gap-3 bg-muted/30 rounded-xl border border-border/50">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                <UserIcon className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold truncate">{user.username}</p>
+                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{user.role}</p>
+              </div>
+            </div>
+          )}
+          <button
+            onClick={logout}
+            className="w-full flex items-center gap-3 p-3 text-destructive hover:bg-destructive/10 rounded-xl transition-all"
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            {!isCollapsed && <span className="font-medium">Logout</span>}
+          </button>
+        </div>
+      )}
+
       <div className="p-4 border-t border-border">
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="w-full flex items-center gap-3 p-3 text-muted-foreground hover:text-foreground transition-colors"
         >
           {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-          {!isCollapsed && <span className="font-medium">Collapse Sidebar</span>}
+          {!isCollapsed && <span className="font-medium">Collapse</span>}
         </button>
       </div>
 
-      {/* Collapse Trigger for better UX */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
         className="absolute -right-3 top-20 bg-border text-foreground w-6 h-6 rounded-full flex items-center justify-center border border-border shadow-md hover:scale-110 transition-all md:flex hidden"

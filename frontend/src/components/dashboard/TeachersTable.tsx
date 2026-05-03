@@ -10,14 +10,14 @@ interface TeachersTableProps {
   onUpdate: (id: number, data: any) => Promise<void>;
   onDelete: (id: number) => void | Promise<void>;
   onCreate: (data: any) => Promise<void>;
+  isAdmin: boolean;
 }
 
-export function TeachersTable({ teachers, courses, onUpdate, onDelete, onCreate }: TeachersTableProps) {
+export function TeachersTable({ teachers, courses, onUpdate, onDelete, onCreate, isAdmin }: TeachersTableProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [formData, setFormData] = useState({ name: '', subjects: [] as string[], availability: [] as { day: number, slot: number }[] });
 
-  // Get unique subjects from courses
   const availableSubjects = Array.from(new Set(courses.map(c => c.name))).sort();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -87,13 +87,15 @@ export function TeachersTable({ teachers, courses, onUpdate, onDelete, onCreate 
           <CardTitle>Teacher List</CardTitle>
           <CardDescription>Teachers registered in the system and their subjects.</CardDescription>
         </div>
-        <button
-          onClick={() => openModal()}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          Add Teacher
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => openModal()}
+            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            Add Teacher
+          </button>
+        )}
       </CardHeader>
       <CardContent>
         <Table>
@@ -102,7 +104,7 @@ export function TeachersTable({ teachers, courses, onUpdate, onDelete, onCreate 
               <TableHead className="w-[200px]">Full Name</TableHead>
               <TableHead>Subjects</TableHead>
               <TableHead>Busy Times</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              {isAdmin && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -131,22 +133,24 @@ export function TeachersTable({ teachers, courses, onUpdate, onDelete, onCreate 
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => openModal(teacher)}
-                      className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(teacher.id)}
-                      className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </TableCell>
+                {isAdmin && (
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openModal(teacher)}
+                        className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onDelete(teacher.id)}
+                        className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -180,25 +184,20 @@ export function TeachersTable({ teachers, courses, onUpdate, onDelete, onCreate 
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Teaching Subjects</label>
                       <div className="flex flex-wrap gap-2 p-3 bg-muted/50 border border-border rounded-xl min-h-[100px]">
-                        {availableSubjects.length > 0 ? (
-                          availableSubjects.map(subject => (
-                            <button
-                              key={subject}
-                              type="button"
-                              onClick={() => toggleSubject(subject)}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${formData.subjects.includes(subject)
-                                ? 'bg-primary text-primary-foreground shadow-md'
-                                : 'bg-background text-muted-foreground hover:text-foreground border border-border'
-                                }`}
-                            >
-                              {subject}
-                            </button>
-                          ))
-                        ) : (
-                          <p className="text-xs text-muted-foreground italic">No courses found in system. Add courses first.</p>
-                        )}
+                        {availableSubjects.map(subject => (
+                          <button
+                            key={subject}
+                            type="button"
+                            onClick={() => toggleSubject(subject)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${formData.subjects.includes(subject)
+                              ? 'bg-primary text-primary-foreground shadow-md'
+                              : 'bg-background text-muted-foreground hover:text-foreground border border-border'
+                              }`}
+                          >
+                            {subject}
+                          </button>
+                        ))}
                       </div>
-                      <p className="text-[10px] text-muted-foreground italic">Select from available courses in the database.</p>
                     </div>
                   </div>
 

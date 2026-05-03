@@ -1,17 +1,22 @@
+"use client";
+
 import { useState } from "react";
-import { Calendar, RefreshCw } from 'lucide-react';
+import { Calendar, RefreshCw, User as UserIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useAuth } from "@/lib/auth";
 
 interface HeaderProps {
   onRefresh: () => Promise<void>;
   onGenerate: () => Promise<void>;
   loading: boolean;
   activeTab: string;
+  isAdmin: boolean;
 }
 
-export function Header({ onRefresh, onGenerate, loading, activeTab }: HeaderProps) {
+export function Header({ onRefresh, onGenerate, loading, activeTab, isAdmin }: HeaderProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { user } = useAuth();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -31,6 +36,16 @@ export function Header({ onRefresh, onGenerate, loading, activeTab }: HeaderProp
         </div>
       </div>
       <div className="flex gap-3 items-center">
+        {/* Welcome Message */}
+        <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-xl border border-border mr-2">
+          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+            <UserIcon className="w-3 h-3 text-primary" />
+          </div>
+          <span className="text-sm font-medium">
+            Welcome, <span className="font-bold text-primary">{user ? user.username : "Viewer"}</span>
+          </span>
+        </div>
+
         <ThemeToggle />
         <button 
           onClick={handleRefresh}
@@ -40,7 +55,7 @@ export function Header({ onRefresh, onGenerate, loading, activeTab }: HeaderProp
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           {isRefreshing ? "Refreshing..." : "Refresh"}
         </button>
-        {activeTab === 'schedule' && (
+        {(activeTab === 'schedule' && isAdmin) && (
           <Button size="lg" onClick={onGenerate} disabled={loading} className="gap-2 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 h-11 rounded-xl">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             {loading ? "Generating..." : "Generate Schedule"}
