@@ -86,6 +86,13 @@ export default function Home() {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      if (res.status === 401) {
+        logout();
+        toast.error("Session expired. Please login again.");
+        return;
+      }
+
       if (res.ok) {
         await fetchData();
         toast.success(selectedClassId === 'all' 
@@ -112,6 +119,13 @@ export default function Home() {
         },
         body: JSON.stringify(data)
       });
+
+      if (res.status === 401) {
+        logout();
+        toast.error("Session expired. Please login again.");
+        return;
+      }
+
       if (res.ok) {
         await fetchData();
         toast.success(`${type.slice(0, -1)} added successfully.`);
@@ -134,6 +148,13 @@ export default function Home() {
         },
         body: JSON.stringify(data)
       });
+
+      if (res.status === 401) {
+        logout();
+        toast.error("Session expired. Please login again.");
+        return;
+      }
+
       if (res.ok) {
         await fetchData();
         toast.success(`${type.slice(0, -1)} updated successfully.`);
@@ -152,6 +173,13 @@ export default function Home() {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      if (res.status === 401) {
+        logout();
+        toast.error("Session expired. Please login again.");
+        return;
+      }
+
       if (res.ok) {
         await fetchData();
         toast.success(`${deleteConfirm.type.slice(0, -1)} deleted successfully.`);

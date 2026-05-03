@@ -124,18 +124,11 @@ export function TeachersTable({
                     <TableCell className="font-bold text-foreground">{teacher.name}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1.5">
-                        {Array.from(new Set(teacherCourses.map(c => c.subject.name))).map(subjectName => {
-                          const subjectClasses = teacherCourses
-                            .filter(c => c.subject.name === subjectName)
-                            .map(c => classes.find(cl => cl.id === c.class_id)?.name)
-                            .filter(Boolean)
-                            .join(', ');
-                          return (
-                            <span key={subjectName} className="bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
-                              {subjectName} <span className="opacity-60 ml-1">({subjectClasses})</span>
-                            </span>
-                          );
-                        })}
+                        {Array.from(new Set(teacherCourses.map(c => c.subject.name))).map(subjectName => (
+                          <span key={subjectName} className="bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                            {subjectName}
+                          </span>
+                        ))}
                         {teacherCourses.length === 0 && <span className="text-muted-foreground text-xs italic">No assignments</span>}
                       </div>
                     </TableCell>
@@ -182,7 +175,7 @@ export function TeachersTable({
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-2 sm:p-4 overflow-y-auto sm:items-center pt-8 sm:pt-0">
           <div className="bg-background border border-border w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
               <h3 className="font-bold text-xl">{editingTeacher ? `Edit Teacher: ${editingTeacher.name}` : 'Add New Teacher'}</h3>

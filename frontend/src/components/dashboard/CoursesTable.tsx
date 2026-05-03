@@ -133,7 +133,7 @@ export function CoursesTable({ subjects, onUpdate, onDelete, onCreate, isAdmin }
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-start justify-center p-2 sm:p-4 overflow-y-auto sm:items-center pt-8 sm:pt-0 animate-in fade-in duration-200">
           <div className="bg-background border border-border w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-8 border-b border-border flex justify-between items-center bg-muted/30">
               <div className="flex items-center gap-3">
