@@ -52,13 +52,6 @@ export function TeachersTable({
     closeModal();
   };
 
-  const handleAddAssignment = async () => {
-    if (!editingTeacher) return;
-    await onCreateCourse({
-      ...assignmentForm,
-      teacher_id: editingTeacher.id
-    });
-  };
 
   const toggleSlot = (day: number, slot: number) => {
     const exists = formData.availability.find(s => s.day === day && s.slot === slot);
@@ -131,11 +124,18 @@ export function TeachersTable({
                     <TableCell className="font-bold text-foreground">{teacher.name}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1.5">
-                        {teacherCourses.map(course => (
-                          <span key={course.id} className="bg-primary/10 text-primary border border-primary/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                            {course.subject.name} ({classes.find(c => c.id === course.class_id)?.name})
-                          </span>
-                        ))}
+                        {Array.from(new Set(teacherCourses.map(c => c.subject.name))).map(subjectName => {
+                          const subjectClasses = teacherCourses
+                            .filter(c => c.subject.name === subjectName)
+                            .map(c => classes.find(cl => cl.id === c.class_id)?.name)
+                            .filter(Boolean)
+                            .join(', ');
+                          return (
+                            <span key={subjectName} className="bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                              {subjectName} <span className="opacity-60 ml-1">({subjectClasses})</span>
+                            </span>
+                          );
+                        })}
                         {teacherCourses.length === 0 && <span className="text-muted-foreground text-xs italic">No assignments</span>}
                       </div>
                     </TableCell>
@@ -270,19 +270,7 @@ export function TeachersTable({
                             </select>
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[10px] font-bold uppercase text-muted-foreground">Class</label>
-                            <select
-                              value={assignmentForm.class_id}
-                              onChange={e => setAssignmentForm({ ...assignmentForm, class_id: parseInt(e.target.value) })}
-                              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm"
-                            >
-                              {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                            </select>
-                          </div>
-                        </div>
-                        <div className="flex items-end gap-4">
-                          <div className="space-y-1 flex-1">
-                            <label className="text-[10px] font-bold uppercase text-muted-foreground">Weekly Hours</label>
+                            <label className="text-[10px] font-bold uppercase text-muted-foreground">Weekly Hours (Per Class)</label>
                             <input
                               type="number"
                               min="1" max="10"
@@ -291,13 +279,29 @@ export function TeachersTable({
                               className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm"
                             />
                           </div>
-                          <button
-                            onClick={handleAddAssignment}
-                            className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary/90 flex items-center gap-2"
-                          >
-                            <Plus className="w-4 h-4" /> Add
-                          </button>
                         </div>
+                        <button
+                          onClick={async () => {
+                            if (!editingTeacher) return;
+                            // Create for ALL classes
+                            for (const cls of classes) {
+                              await onCreateCourse({
+                                subject_id: assignmentForm.subject_id,
+                                teacher_id: editingTeacher.id,
+                                class_id: cls.id,
+                                weekly_hours: assignmentForm.weekly_hours
+                              });
+                            }
+                            setAssignmentForm({
+                              subject_id: subjects[0]?.id || 0,
+                              class_id: classes[0]?.id || 0,
+                              weekly_hours: 2
+                            });
+                          }}
+                          className="w-full bg-primary text-primary-foreground px-4 py-3 rounded-xl text-sm font-bold hover:bg-primary/90 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all"
+                        >
+                          <Plus className="w-4 h-4" /> Add Subject to All Classes
+                        </button>
                       </div>
 
                       {/* Assignments List */}

@@ -113,9 +113,6 @@ export function CoursesTable({ subjects, onUpdate, onDelete, onCreate, isAdmin }
               <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors line-clamp-1">
                 {subject.name}
               </h3>
-              <p className="text-xs text-muted-foreground mt-1 font-medium uppercase tracking-wider opacity-70">
-                General Subject
-              </p>
             </div>
 
             {/* Decorative element */}

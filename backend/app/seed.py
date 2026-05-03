@@ -66,42 +66,39 @@ def seed(clear_db=True):
     db.commit()
     print(f"{len(teachers_data)} Teachers seeded.")
 
-    # 3. Classes (8: 9A to 12B)
+    # 3. Classes
+    class_names = ["9-A", "10-A", "11-A", "12-A"]
     classes = []
-    grades = ["9", "10", "11", "12"]
-    sections = ["A", "B"]
-    for g in grades:
-        for s in sections:
-            c = models.SchoolClass(name=f"{g}-{s}")
-            db.add(c)
-            classes.append(c)
+    for name in class_names:
+        cls = models.SchoolClass(name=name)
+        db.add(cls)
+        classes.append(cls)
     db.commit()
-    print("8 Classes (9A-12B) seeded.")
+    print(f"{len(classes)} Classes seeded.")
 
     # 4. Courses (Initial Assignments/Distributions)
     if teachers and subjects and classes:
         import random
-        print("Assigning minimal subjects to teachers...")
+        print("Assigning subjects to teachers across ALL classes...")
         
-        # Ensure EVERY teacher has exactly 1-2 assignments
         for teacher in teachers:
             # Pick 1-2 random subjects for this teacher
             num_to_assign = random.randint(1, 2)
             teacher_subjects = random.sample(subjects, num_to_assign)
             
             for sub in teacher_subjects:
-                # Pick a random class for this subject-teacher combo
-                cls = random.choice(classes)
-                course = models.Course(
-                    subject_id=sub.id,
-                    teacher_id=teacher.id,
-                    class_id=cls.id,
-                    weekly_hours=random.randint(2, 3) # 2-3 hours is enough
-                )
-                db.add(course)
+                # Assign this subject to THIS teacher for ALL classes
+                for cls in classes:
+                    course = models.Course(
+                        subject_id=sub.id,
+                        teacher_id=teacher.id,
+                        class_id=cls.id,
+                        weekly_hours=random.randint(2, 2) # Constant 2 hours for clarity
+                    )
+                    db.add(course)
         
         db.commit()
-        print("Minimal course distributions seeded (1-2 per teacher).")
+        print("Courses seeded across all classes for each teacher assignment.")
 
     print("Seed process finished successfully!")
     db.close()
