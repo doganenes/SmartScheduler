@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Teacher, DAYS, SLOTS, Course, Subject, SchoolClass } from "@/lib/types";
-import { Edit2, Trash2, Plus, X, GraduationCap, Clock } from "lucide-react";
+import { Edit2, Trash2, Plus, X, GraduationCap, Clock, Pencil, Save } from "lucide-react";
 
 interface TeachersTableProps {
   teachers: Teacher[];
@@ -31,6 +31,8 @@ export function TeachersTable({
     availability: [] as { day: number, slot: number }[]
   });
 
+  const [editingAssignmentId, setEditingAssignmentId] = useState<number | null>(null);
+
   const [assignmentForm, setAssignmentForm] = useState({
     subject_id: subjects[0]?.id || 0,
     class_id: classes[0]?.id || 0,
@@ -52,6 +54,14 @@ export function TeachersTable({
     closeModal();
   };
 
+  const handleEditAssignment = (course: Course) => {
+    setEditingAssignmentId(course.id);
+    setAssignmentForm({
+      subject_id: course.subject_id,
+      class_id: course.class_id,
+      weekly_hours: course.weekly_hours
+    });
+  };
 
   const toggleSlot = (day: number, slot: number) => {
     const exists = formData.availability.find(s => s.day === day && s.slot === slot);
@@ -273,36 +283,68 @@ export function TeachersTable({
                             />
                           </div>
                         </div>
-                        <button
-                          onClick={async () => {
-                            if (!editingTeacher) return;
-                            // Create for ALL classes
-                            for (const cls of classes) {
-                              await onCreateCourse({
-                                subject_id: assignmentForm.subject_id,
-                                teacher_id: editingTeacher.id,
-                                class_id: cls.id,
-                                weekly_hours: assignmentForm.weekly_hours
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={async () => {
+                              if (!editingTeacher) return;
+                              
+                              if (editingAssignmentId) {
+                                // UPDATE MODE (Single assignment)
+                                await onUpdateCourse(editingAssignmentId, {
+                                  subject_id: assignmentForm.subject_id,
+                                  teacher_id: editingTeacher.id,
+                                  class_id: assignmentForm.class_id,
+                                  weekly_hours: assignmentForm.weekly_hours
+                                });
+                                setEditingAssignmentId(null);
+                              } else {
+                                // ADD MODE (Bulk all classes)
+                                for (const cls of classes) {
+                                  await onCreateCourse({
+                                    subject_id: assignmentForm.subject_id,
+                                    teacher_id: editingTeacher.id,
+                                    class_id: cls.id,
+                                    weekly_hours: assignmentForm.weekly_hours
+                                  });
+                                }
+                              }
+                              
+                              setAssignmentForm({
+                                subject_id: subjects[0]?.id || 0,
+                                class_id: classes[0]?.id || 0,
+                                weekly_hours: 2
                               });
-                            }
-                            setAssignmentForm({
-                              subject_id: subjects[0]?.id || 0,
-                              class_id: classes[0]?.id || 0,
-                              weekly_hours: 2
-                            });
-                          }}
-                          className="w-full bg-primary text-primary-foreground px-4 py-3 rounded-xl text-sm font-bold hover:bg-primary/90 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all"
-                        >
-                          <Plus className="w-4 h-4" /> Add Subject to All Classes
-                        </button>
+                            }}
+                            className="w-full bg-primary text-primary-foreground px-4 py-3 rounded-xl text-sm font-bold hover:bg-primary/90 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all"
+                          >
+                            {editingAssignmentId ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                            {editingAssignmentId ? 'Save Changes' : 'Add Subject to All Classes'}
+                          </button>
+
+                          {editingAssignmentId && (
+                            <button
+                              onClick={() => {
+                                setEditingAssignmentId(null);
+                                setAssignmentForm({
+                                  subject_id: subjects[0]?.id || 0,
+                                  class_id: classes[0]?.id || 0,
+                                  weekly_hours: 2
+                                });
+                              }}
+                              className="w-full bg-muted text-muted-foreground px-4 py-2 rounded-xl text-xs font-medium hover:bg-muted/80 transition-all"
+                            >
+                              Cancel Editing
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Assignments List */}
                       <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                         {courses.filter(c => c.teacher_id === editingTeacher.id).map(course => (
-                          <div key={course.id} className="flex items-center justify-between bg-muted/50 border border-border p-3 rounded-xl group">
+                          <div key={course.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${editingAssignmentId === course.id ? 'bg-primary/5 border-primary ring-1 ring-primary/20' : 'bg-muted/50 border-border'}`}>
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${editingAssignmentId === course.id ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'}`}>
                                 <GraduationCap className="w-4 h-4" />
                               </div>
                               <div>
@@ -312,12 +354,20 @@ export function TeachersTable({
                                 </div>
                               </div>
                             </div>
-                            <button
-                              onClick={() => onDeleteCourse(course.id)}
-                              className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-all"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleEditAssignment(course)}
+                                className={`p-2 rounded-lg transition-all ${editingAssignmentId === course.id ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary hover:bg-primary/10'}`}
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => onDeleteCourse(course.id)}
+                                className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-all"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                         {courses.filter(c => c.teacher_id === editingTeacher.id).length === 0 && (
