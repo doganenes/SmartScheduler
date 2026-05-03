@@ -4,15 +4,21 @@ from . import models, auth
 def seed():
     db = SessionLocal()
     # 0. Admin User
-    if not db.query(models.User).filter(models.User.username == "admin").first():
-        admin_user = models.User(
+    admin = db.query(models.User).filter(models.User.username == "admin").first()
+    if not admin:
+        admin = models.User(
             username="admin",
-            hashed_password=auth.get_password_hash("admin123"),
+            hashed_password=auth.get_password_hash("admin1234"),
             role=models.UserRole.ADMIN
         )
-        db.add(admin_user)
+        db.add(admin)
         db.commit()
-        print("Default admin user created: admin / admin123")
+        print("Default admin user created: admin / admin1234")
+    else:
+        # Update password to ensure it matches
+        admin.hashed_password = auth.get_password_hash("admin1234")
+        db.commit()
+        print("Admin password updated to: admin1234")
 
     # Check if other data already exists
     if db.query(models.Teacher).first():
