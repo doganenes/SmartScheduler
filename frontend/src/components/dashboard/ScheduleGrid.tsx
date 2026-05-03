@@ -52,7 +52,7 @@ export function ScheduleGrid({ schedule, teachers, classes, selectedClassId }: S
                         {entry ? (
                           <div className="h-full w-full bg-primary/10 border-l-4 border-primary rounded-lg p-3 flex flex-col justify-between group/card hover:bg-primary/20 hover:scale-[1.02] transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md">
                             <div>
-                              <p className="font-bold text-sm text-foreground group-hover/card:text-primary transition-colors leading-tight">{entry.course.name}</p>
+                              <p className="font-bold text-sm text-foreground group-hover/card:text-primary transition-colors leading-tight">{entry.course.subject.name}</p>
                               <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1.5 font-medium">
                                 <GraduationCap className="w-3.5 h-3.5 text-primary/70" />
                                 {classes.find(c => c.id === entry.course.class_id)?.name}

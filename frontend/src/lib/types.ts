@@ -1,7 +1,11 @@
+export type Subject = {
+  id: number;
+  name: string;
+};
+
 export type Teacher = { 
   id: number; 
   name: string; 
-  subjects: string[]; 
   availability?: { day: number; slot: number }[] 
 };
 
@@ -12,7 +16,8 @@ export type SchoolClass = {
 
 export type Course = { 
   id: number; 
-  name: string; 
+  subject_id: number;
+  subject: Subject;
   weekly_hours: number; 
   class_id: number; 
   teacher_id: number 

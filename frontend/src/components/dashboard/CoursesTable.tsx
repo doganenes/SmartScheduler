@@ -1,55 +1,44 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Course, Teacher, SchoolClass } from "@/lib/types";
+import { Subject } from "@/lib/types";
 import { Edit2, Trash2, Plus, X } from "lucide-react";
 
 interface CoursesTableProps {
-  courses: Course[];
-  teachers: Teacher[];
-  classes: SchoolClass[];
+  subjects: Subject[];
   onUpdate: (id: number, data: any) => Promise<void>;
   onDelete: (id: number) => void | Promise<void>;
   onCreate: (data: any) => Promise<void>;
   isAdmin: boolean;
 }
 
-export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, onCreate, isAdmin }: CoursesTableProps) {
+export function CoursesTable({ subjects, onUpdate, onDelete, onCreate, isAdmin }: CoursesTableProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<any | null>(null);
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    weekly_hours: 2,
-    class_id: classes[0]?.id || 0,
-    teacher_id: teachers[0]?.id || 0
+    name: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingCourse) {
-      await onUpdate(editingCourse.id, formData);
+    if (editingSubject) {
+      await onUpdate(editingSubject.id, formData);
     } else {
       await onCreate(formData);
     }
     closeModal();
   };
 
-  const openModal = (course?: Course) => {
-    if (course) {
-      setEditingCourse(course);
+  const openModal = (subject?: Subject) => {
+    if (subject) {
+      setEditingSubject(subject);
       setFormData({
-        name: course.name,
-        weekly_hours: course.weekly_hours,
-        class_id: course.class_id,
-        teacher_id: course.teacher_id
+        name: subject.name
       });
     } else {
-      setEditingCourse(null);
+      setEditingSubject(null);
       setFormData({
-        name: '',
-        weekly_hours: 2,
-        class_id: classes[0]?.id || 0,
-        teacher_id: teachers[0]?.id || 0
+        name: ''
       });
     }
     setIsModalOpen(true);
@@ -57,15 +46,15 @@ export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, o
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setEditingCourse(null);
+    setEditingSubject(null);
   };
 
   return (
     <Card className="border-none shadow-xl">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle>Course Distributions</CardTitle>
-          <CardDescription>Manage curriculum and teacher assignments.</CardDescription>
+          <CardTitle>Subject List</CardTitle>
+          <CardDescription>Manage the master list of course names/subjects.</CardDescription>
         </div>
         {isAdmin && (
           <button
@@ -73,56 +62,34 @@ export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, o
             className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
           >
             <Plus className="w-4 h-4" />
-            Add Course
+            Add Subject
           </button>
         )}
       </CardHeader>
       <CardContent>
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Course Name</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Teacher</TableHead>
-              <TableHead>Weekly Hours</TableHead>
+              <TableHead>Subject Name</TableHead>
               {isAdmin && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Object.values(courses.reduce((acc, course) => {
-              const key = `${course.name}-${course.teacher_id}-${course.weekly_hours}`;
-              if (!acc[key]) {
-                acc[key] = { ...course, classNames: [] as string[], ids: [] as number[] };
-              }
-              const className = classes.find(c => c.id === course.class_id)?.name || 'Unknown';
-              acc[key].classNames.push(className);
-              acc[key].ids.push(course.id);
-              return acc;
-            }, {} as Record<string, any>)).map((group: any) => (
-              <TableRow key={group.ids[0]} className="hover:bg-muted/50 group">
-                <TableCell className="font-bold text-foreground">{group.name}</TableCell>
-                <TableCell className="max-w-[300px]">
-                  <div className="flex flex-wrap gap-2 py-1">
-                    {group.classNames.map((name: string) => (
-                      <span key={name} className="bg-primary/5 text-primary border border-primary/20 px-3 py-1 rounded-full text-[11px] font-bold tracking-tight shadow-sm">
-                        {name}
-                      </span>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground font-medium">{teachers.find(t => t.id === group.teacher_id)?.name}</TableCell>
-                <TableCell className="font-bold text-primary">{group.weekly_hours} Hours</TableCell>
+            {subjects.map((subject) => (
+              <TableRow key={subject.id} className="hover:bg-muted/50 group">
+                <TableCell className="font-bold text-foreground text-lg py-4">{subject.name}</TableCell>
                 {isAdmin && (
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
-                        onClick={() => openModal(group)}
+                        onClick={() => openModal(subject)}
                         className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => onDelete(group.ids[0])}
+                        onClick={() => onDelete(subject.id)}
                         className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -134,6 +101,7 @@ export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, o
             ))}
           </TableBody>
         </Table>
+      </div>
       </CardContent>
 
       {/* Modal */}
@@ -141,14 +109,14 @@ export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, o
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-background border border-border w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
             <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
-              <h3 className="font-bold text-xl">{editingCourse ? 'Edit Course' : 'Add New Course'}</h3>
+              <h3 className="font-bold text-xl">{editingSubject ? 'Edit Subject' : 'Add New Subject'}</h3>
               <button onClick={closeModal} className="text-muted-foreground hover:text-foreground">
                 <X className="w-6 h-6" />
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Course Name</label>
+                <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Subject Name</label>
                 <input
                   required
                   value={formData.name}
@@ -156,58 +124,6 @@ export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, o
                   className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   placeholder="e.g. Mathematics"
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Weekly Hours</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    max="10"
-                    value={formData.weekly_hours}
-                    onChange={e => setFormData({ ...formData, weekly_hours: parseInt(e.target.value) })}
-                    className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Class</label>
-                  <select
-                    value={formData.class_id}
-                    onChange={e => setFormData({ ...formData, class_id: parseInt(e.target.value) })}
-                    className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                  >
-                    {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Teacher</label>
-                <select
-                  value={formData.teacher_id}
-                  onChange={e => setFormData({ ...formData, teacher_id: parseInt(e.target.value) })}
-                  className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                >
-                  {teachers.map(t => {
-                    const busySlotsCount = t.availability?.length || 0;
-                    const maxCapacity = 40 - busySlotsCount;
-                    const currentWorkload = courses
-                      .filter(c => c.teacher_id === t.id && (editingCourse ? !(editingCourse.ids?.includes(c.id) || editingCourse.id === c.id) : true))
-                      .reduce((sum, c) => sum + c.weekly_hours, 0);
-
-                    const remainingCapacity = maxCapacity - currentWorkload;
-                    const isBusy = remainingCapacity < formData.weekly_hours;
-
-                    return (
-                      <option key={t.id} value={t.id} disabled={isBusy}>
-                        {t.name} ({t.subjects.join(', ')})
-                        {isBusy ? ` ⚠️ BUSY (Rem: ${remainingCapacity}h)` : ` (${remainingCapacity}h free)`}
-                      </option>
-                    );
-                  })}
-                </select>
               </div>
 
               <div className="pt-4 flex gap-3">
@@ -222,7 +138,7 @@ export function CoursesTable({ courses, teachers, classes, onUpdate, onDelete, o
                   type="submit"
                   className="flex-1 px-4 py-3 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
                 >
-                  {editingCourse ? 'Save Changes' : 'Create Course'}
+                  {editingSubject ? 'Save Changes' : 'Create Subject'}
                 </button>
               </div>
             </form>

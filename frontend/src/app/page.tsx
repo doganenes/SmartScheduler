@@ -15,12 +15,13 @@ import { CoursesTable } from '@/components/dashboard/CoursesTable';
 import { LoginForm } from '@/components/dashboard/LoginForm';
 
 // Types & Constants
-import { Teacher, SchoolClass, Course, ScheduleEntry } from '@/lib/types';
+import { Teacher, SchoolClass, Course, ScheduleEntry, Subject } from '@/lib/types';
 import { Sidebar } from '@/components/dashboard/Sidebar';
 
 export default function Home() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -44,7 +45,7 @@ export default function Home() {
 
   const fetchData = async () => {
     try {
-      const endpoints = ['teachers', 'classes', 'courses', 'scheduler/view'];
+      const endpoints = ['teachers', 'classes', 'subjects', 'courses', 'scheduler/view'];
       const responses = await Promise.all(
         endpoints.map(ep => fetch(`${API_URL}/${ep}/`).then(res => {
           if (!res.ok) throw new Error(`Failed to fetch ${ep}`);
@@ -52,10 +53,11 @@ export default function Home() {
         }))
       );
       
-      const [teachersData, classesData, coursesData, scheduleData] = responses;
+      const [teachersData, classesData, subjectsData, coursesData, scheduleData] = responses;
 
       setTeachers(teachersData || []);
       setClasses(classesData || []);
+      setSubjects(subjectsData || []);
       setCourses(coursesData || []);
       setSchedule(scheduleData || []);
 
@@ -173,21 +175,22 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen bg-background overflow-hidden">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       
       <main className="flex-1 h-full overflow-y-auto p-4 md:p-8 scroll-smooth">
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
           <Header 
             onRefresh={fetchData} 
             onGenerate={generateSchedule} 
             loading={loading} 
             activeTab={activeTab}
+            setActiveTab={setActiveTab}
             isAdmin={isAdmin()}
           />
 
-          <div className="flex flex-col gap-6">
-            <h2 className="text-4xl font-bold capitalize tracking-tight text-foreground">{activeTab} Management</h2>
+          <div className="flex flex-col gap-2 md:gap-6">
+            <h2 className="text-2xl md:text-4xl font-bold capitalize tracking-tight text-foreground">{activeTab === 'courses' ? 'Subject' : activeTab} Management</h2>
             {activeTab === 'schedule' && (
               <ClassSelector 
                 classes={classes} 
@@ -210,10 +213,15 @@ export default function Home() {
             {activeTab === 'teachers' && (
               <TeachersTable 
                 teachers={teachers} 
+                subjects={subjects}
+                classes={classes}
                 courses={courses}
                 onCreate={handleCreate('teachers')}
                 onUpdate={handleUpdate('teachers')}
-                onDelete={(id) => setDeleteConfirm({ isOpen: true, id, type: 'teachers' })}
+                onDelete={(id: number) => setDeleteConfirm({ isOpen: true, id, type: 'teachers' })}
+                onCreateCourse={handleCreate('courses')}
+                onUpdateCourse={handleUpdate('courses')}
+                onDeleteCourse={(id: number) => setDeleteConfirm({ isOpen: true, id, type: 'courses' })}
                 isAdmin={isAdmin()}
               />
             )}
@@ -223,19 +231,17 @@ export default function Home() {
                 classes={classes} 
                 onCreate={handleCreate('classes')}
                 onUpdate={handleUpdate('classes')}
-                onDelete={(id) => setDeleteConfirm({ isOpen: true, id, type: 'classes' })}
+                onDelete={(id: number) => setDeleteConfirm({ isOpen: true, id, type: 'classes' })}
                 isAdmin={isAdmin()}
               />
             )}
 
             {activeTab === 'courses' && (
               <CoursesTable 
-                courses={courses} 
-                teachers={teachers} 
-                classes={classes} 
-                onCreate={handleCreate('courses')}
-                onUpdate={handleUpdate('courses')}
-                onDelete={(id) => setDeleteConfirm({ isOpen: true, id, type: 'courses' })}
+                subjects={subjects} 
+                onCreate={handleCreate('subjects')}
+                onUpdate={handleUpdate('subjects')}
+                onDelete={(id: number) => setDeleteConfirm({ isOpen: true, id, type: 'subjects' })}
                 isAdmin={isAdmin()}
               />
             )}

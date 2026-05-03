@@ -15,11 +15,15 @@ class User(Base):
     hashed_password = Column(String)
     role = Column(String, default=UserRole.VIEWER)
 
+class Subject(Base):
+    __tablename__ = "subjects"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+
 class Teacher(Base):
     __tablename__ = "teachers"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
-    subjects = Column(JSON)  # List of subjects they can teach
     availability = Column(JSON)  # List of {day: 0-4, slot: 0-7} when they are BUSY
 
 class SchoolClass(Base):
@@ -30,11 +34,12 @@ class SchoolClass(Base):
 class Course(Base):
     __tablename__ = "courses"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
+    subject_id = Column(Integer, ForeignKey("subjects.id"))
     weekly_hours = Column(Integer)
     class_id = Column(Integer, ForeignKey("classes.id"))
     teacher_id = Column(Integer, ForeignKey("teachers.id"))
 
+    subject = relationship("Subject")
     school_class = relationship("SchoolClass")
     teacher = relationship("Teacher")
 

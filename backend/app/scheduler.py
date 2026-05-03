@@ -80,7 +80,7 @@ class Scheduler:
                 placed_hours += 1
             
             if placed_hours < hours_to_place:
-                print(f"Warning: Could not place all hours for course {course.name} in class {course.class_id}")
+                print(f"Warning: Could not place all hours for course {course.subject.name} in class {course.class_id}")
 
         # 4. Save to DB
         self.db.add_all(schedule_entries)

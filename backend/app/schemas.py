@@ -21,9 +21,19 @@ class User(UserBase):
     class Config:
         from_attributes = True
 
+class SubjectBase(BaseModel):
+    name: str
+
+class SubjectCreate(SubjectBase):
+    pass
+
+class Subject(SubjectBase):
+    id: int
+    class Config:
+        from_attributes = True
+
 class TeacherBase(BaseModel):
     name: str
-    subjects: List[str]
     availability: Optional[List[Dict[str, int]]] = []
 
 class TeacherCreate(TeacherBase):
@@ -46,7 +56,7 @@ class Class(ClassBase):
         from_attributes = True
 
 class CourseBase(BaseModel):
-    name: str
+    subject_id: int
     weekly_hours: int
     class_id: int
     teacher_id: int
@@ -56,6 +66,7 @@ class CourseCreate(CourseBase):
 
 class Course(CourseBase):
     id: int
+    subject: Subject
     class Config:
         from_attributes = True
 

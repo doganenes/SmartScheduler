@@ -113,6 +113,38 @@ def delete_class(class_id: int, db: Session = Depends(get_db), current_user: mod
     db.commit()
     return {"message": "Class deleted"}
 
+# --- Subjects ---
+@app.get("/subjects/", response_model=List[schemas.Subject])
+def get_subjects(db: Session = Depends(get_db)):
+    return db.query(models.Subject).all()
+
+@app.post("/subjects/", response_model=schemas.Subject)
+def create_subject(subject: schemas.SubjectCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.check_admin)):
+    db_subject = models.Subject(**subject.model_dump())
+    db.add(db_subject)
+    db.commit()
+    db.refresh(db_subject)
+    return db_subject
+
+@app.put("/subjects/{subject_id}", response_model=schemas.Subject)
+def update_subject(subject_id: int, subject: schemas.SubjectCreate, db: Session = Depends(get_db), current_user: models.User = Depends(auth.check_admin)):
+    db_subject = db.query(models.Subject).filter(models.Subject.id == subject_id).first()
+    if not db_subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+    db_subject.name = subject.name
+    db.commit()
+    db.refresh(db_subject)
+    return db_subject
+
+@app.delete("/subjects/{subject_id}")
+def delete_subject(subject_id: int, db: Session = Depends(get_db), current_user: models.User = Depends(auth.check_admin)):
+    db_subject = db.query(models.Subject).filter(models.Subject.id == subject_id).first()
+    if not db_subject:
+        raise HTTPException(status_code=404, detail="Subject not found")
+    db.delete(db_subject)
+    db.commit()
+    return {"message": "Subject deleted"}
+
 # --- Courses ---
 @app.get("/courses/", response_model=List[schemas.Course])
 def get_courses(db: Session = Depends(get_db)):
