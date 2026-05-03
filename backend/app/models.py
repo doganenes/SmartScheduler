@@ -34,10 +34,10 @@ class SchoolClass(Base):
 class Course(Base):
     __tablename__ = "courses"
     id = Column(Integer, primary_key=True, index=True)
-    subject_id = Column(Integer, ForeignKey("subjects.id"))
+    subject_id = Column(Integer, ForeignKey("subjects.id", ondelete="CASCADE"))
     weekly_hours = Column(Integer)
-    class_id = Column(Integer, ForeignKey("classes.id"))
-    teacher_id = Column(Integer, ForeignKey("teachers.id"))
+    class_id = Column(Integer, ForeignKey("classes.id", ondelete="CASCADE"))
+    teacher_id = Column(Integer, ForeignKey("teachers.id", ondelete="CASCADE"))
 
     subject = relationship("Subject")
     school_class = relationship("SchoolClass")
@@ -48,6 +48,6 @@ class ScheduleEntry(Base):
     id = Column(Integer, primary_key=True, index=True)
     day = Column(Integer)  # 0-4 (Mon-Fri)
     slot = Column(Integer) # 0-7 (Hour of day)
-    course_id = Column(Integer, ForeignKey("courses.id"))
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"))
     
     course = relationship("Course")

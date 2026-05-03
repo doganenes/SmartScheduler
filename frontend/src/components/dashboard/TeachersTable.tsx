@@ -317,7 +317,7 @@ export function TeachersTable({
                             </div>
                             <button
                               onClick={() => onDeleteCourse(course.id)}
-                              className="p-2 text-destructive opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded-lg transition-all"
+                              className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-all"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
