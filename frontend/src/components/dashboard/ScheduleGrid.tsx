@@ -51,17 +51,23 @@ export function ScheduleGrid({ schedule, teachers, classes, selectedClassId }: S
                       <td key={`${dayIdx}-${slotIdx}`} className="p-2 border-b border-l border-border h-28 min-w-[160px]">
                         {entry ? (
                           <div className="h-full w-full bg-primary/10 border-l-4 border-primary rounded-lg p-3 flex flex-col justify-between group/card hover:bg-primary/20 hover:scale-[1.02] transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md">
-                            <div>
-                              <p className="font-bold text-sm text-foreground group-hover/card:text-primary transition-colors leading-tight">{entry.course.subject.name}</p>
-                              <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1.5 font-medium">
-                                <GraduationCap className="w-3.5 h-3.5 text-primary/70" />
-                                {classes.find(c => c.id === entry.course.class_id)?.name}
+                            <div className="space-y-1">
+                              <p className="font-black text-sm text-primary leading-tight uppercase tracking-tight">
+                                {entry.course.subject.name}
+                              </p>
+                              {selectedClassId === 'all' && (
+                                <p className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 opacity-70">
+                                  <GraduationCap className="w-3 h-3" />
+                                  {classes.find(c => c.id === entry.course.class_id)?.name}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-auto bg-primary/5 rounded-md px-2 py-1 w-fit group-hover/card:bg-primary/10 transition-colors">
+                              <Users className="w-3 h-3 text-muted-foreground" />
+                              <p className="text-[10px] font-bold text-muted-foreground truncate max-w-[120px]">
+                                {teachers.find(t => t.id === entry.course.teacher_id)?.name}
                               </p>
                             </div>
-                            <p className="text-[10px] font-bold text-accent-foreground uppercase tracking-wider mt-2 flex items-center gap-1.5 bg-accent/20 w-fit px-2 py-0.5 rounded">
-                              <Users className="w-3.5 h-3.5" />
-                              {teachers.find(t => t.id === entry.course.teacher_id)?.name}
-                            </p>
                           </div>
                         ) : (
                           <div className="h-full w-full flex items-center justify-center text-muted-foreground/20 italic text-xs border-2 border-dashed border-muted rounded-lg group-hover:border-primary/20 transition-colors">
