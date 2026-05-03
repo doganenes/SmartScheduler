@@ -25,22 +25,9 @@ export function ScheduleGrid({ schedule, teachers, classes, selectedClassId, onG
   return (
     <Card className="border-none shadow-2xl bg-card/50 backdrop-blur-sm overflow-hidden">
       <CardHeader className="pb-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-row justify-between items-center gap-4">
           <div>
-            <div className="flex items-center gap-4">
-              <CardTitle className="text-2xl">Weekly Timetable</CardTitle>
-              {isAdmin && (
-                <Button 
-                  size="sm" 
-                  onClick={onGenerate} 
-                  disabled={loading} 
-                  className="gap-2 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 rounded-xl hidden sm:flex h-9"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                  {loading ? "Generating..." : "Generate"}
-                </Button>
-              )}
-            </div>
+            <CardTitle className="text-2xl">Weekly Timetable</CardTitle>
             <CardDescription className="mt-1">
               {selectedClassId !== 'all' 
                 ? `Course distribution for class ${classes.find(c => c.id === selectedClassId)?.name}.` 
@@ -50,12 +37,14 @@ export function ScheduleGrid({ schedule, teachers, classes, selectedClassId, onG
           
           {isAdmin && (
             <Button 
+              size="lg" 
               onClick={onGenerate} 
               disabled={loading} 
-              className="gap-2 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 rounded-xl flex sm:hidden w-full"
+              className="gap-2 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 rounded-xl px-6"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? "Generating..." : "Generate Schedule"}
+              <span className="hidden sm:inline">{loading ? "Generating..." : "Generate Schedule"}</span>
+              <span className="sm:hidden">{loading ? "..." : "Generate"}</span>
             </Button>
           )}
         </div>
