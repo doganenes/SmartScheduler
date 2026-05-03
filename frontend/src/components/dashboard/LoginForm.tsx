@@ -28,7 +28,7 @@ export function LoginForm() {
 
       if (res.ok) {
         const data = await res.json();
-        
+
         // Fetch user info with the token
         const userRes = await fetch(`${API_URL}/users/me`, {
           headers: {
@@ -36,7 +36,7 @@ export function LoginForm() {
           },
         });
         const userData = await userRes.json();
-        
+
         login(data.access_token, userData);
         toast.success("Welcome back, " + userData.username);
       } else {
