@@ -25,7 +25,7 @@ export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const { token, isAdmin } = useAuth();
+  const { token, isAdmin, logout } = useAuth();
   
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; id: number; type: string | null }>({
     isOpen: false,
@@ -47,7 +47,7 @@ export default function Home() {
     try {
       const endpoints = ['teachers', 'classes', 'subjects', 'courses', 'scheduler/view'];
       const responses = await Promise.all(
-        endpoints.map(ep => fetch(`${API_URL}/${ep}/`).then(res => {
+        endpoints.map(ep => fetch(`${API_URL}/${ep}`).then(res => {
           if (!res.ok) throw new Error(`Failed to fetch ${ep}`);
           return res.json();
         }))
