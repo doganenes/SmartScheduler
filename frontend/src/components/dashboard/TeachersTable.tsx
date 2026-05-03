@@ -11,7 +11,7 @@ interface TeachersTableProps {
   courses: Course[];
   onUpdate: (id: number, data: any) => Promise<void>;
   onDelete: (id: number) => void | Promise<void>;
-  onCreate: (data: any) => Promise<void>;
+  onCreate: (data: any) => Promise<any>;
   onCreateCourse: (data: any) => Promise<void>;
   onUpdateCourse: (id: number, data: any) => Promise<void>;
   onDeleteCourse: (id: number) => void | Promise<void>;
@@ -328,11 +328,11 @@ export function TeachersTable({
                               weekly_hours: 2
                             });
                           }}
-                            className="w-full bg-primary text-primary-foreground px-4 py-3 rounded-xl text-sm font-bold hover:bg-primary/90 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all"
-                          >
-                            {editingAssignmentId ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                            {editingAssignmentId ? 'Save Changes' : 'Add Subject to All Classes'}
-                          </button>
+                          className="w-full bg-primary text-primary-foreground px-4 py-3 rounded-xl text-sm font-bold hover:bg-primary/90 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all"
+                        >
+                          {editingAssignmentId ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                          {editingAssignmentId ? 'Save Changes' : 'Add Subject to All Classes'}
+                        </button>
 
                           {editingAssignmentId && (
                             <button

@@ -27,7 +27,7 @@ export function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
     { id: 'schedule', label: 'Weekly Schedule', icon: LayoutDashboard },
     { id: 'teachers', label: 'Teachers', icon: Users },
     { id: 'classes', label: 'Classes', icon: GraduationCap },
-    { id: 'courses', label: 'Subjects', icon: BookOpen },
+    { id: 'courses', label: 'Lectures', icon: BookOpen },
   ];
 
   return (
