@@ -18,17 +18,17 @@ interface TeachersTableProps {
   isAdmin: boolean;
 }
 
-export function TeachersTable({ 
-  teachers, subjects, classes, courses, 
-  onUpdate, onDelete, onCreate, 
+export function TeachersTable({
+  teachers, subjects, classes, courses,
+  onUpdate, onDelete, onCreate,
   onCreateCourse, onUpdateCourse, onDeleteCourse,
-  isAdmin 
+  isAdmin
 }: TeachersTableProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
-  const [formData, setFormData] = useState({ 
-    name: '', 
-    availability: [] as { day: number, slot: number }[] 
+  const [formData, setFormData] = useState({
+    name: '',
+    availability: [] as { day: number, slot: number }[]
   });
 
   const [assignmentForm, setAssignmentForm] = useState({
@@ -115,69 +115,69 @@ export function TeachersTable({
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[200px]">Full Name</TableHead>
-              <TableHead>Active Assignments</TableHead>
-              <TableHead>Busy Times</TableHead>
-              {isAdmin && <TableHead className="text-right">Actions</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {teachers.map((teacher) => {
-              const teacherCourses = courses.filter(c => c.teacher_id === teacher.id);
-              return (
-                <TableRow key={teacher.id} className="hover:bg-muted/50 group">
-                  <TableCell className="font-bold text-foreground">{teacher.name}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1.5">
-                      {teacherCourses.map(course => (
-                        <span key={course.id} className="bg-primary/10 text-primary border border-primary/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                          {course.subject.name} ({classes.find(c => c.id === course.class_id)?.name})
-                        </span>
-                      ))}
-                      {teacherCourses.length === 0 && <span className="text-muted-foreground text-xs italic">No assignments</span>}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1.5 max-w-[400px]">
-                      {teacher.availability && teacher.availability.length > 0 ? (
-                        teacher.availability.map((slot, idx) => (
-                          <span key={idx} className="bg-destructive/10 text-destructive border border-destructive/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap">
-                            {DAYS[slot.day].substring(0, 3)} {SLOTS[slot.slot]}
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[200px]">Full Name</TableHead>
+                <TableHead>Lectures</TableHead>
+                <TableHead>Busy Times</TableHead>
+                {isAdmin && <TableHead className="text-right">Actions</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {teachers.map((teacher) => {
+                const teacherCourses = courses.filter(c => c.teacher_id === teacher.id);
+                return (
+                  <TableRow key={teacher.id} className="hover:bg-muted/50 group">
+                    <TableCell className="font-bold text-foreground">{teacher.name}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1.5">
+                        {teacherCourses.map(course => (
+                          <span key={course.id} className="bg-primary/10 text-primary border border-primary/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                            {course.subject.name} ({classes.find(c => c.id === course.class_id)?.name})
                           </span>
-                        ))
-                      ) : (
-                        <span className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                          Always Available
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  {isAdmin && (
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => openModal(teacher)}
-                          className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => onDelete(teacher.id)}
-                          className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        ))}
+                        {teacherCourses.length === 0 && <span className="text-muted-foreground text-xs italic">No assignments</span>}
                       </div>
                     </TableCell>
-                  )}
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1.5 max-w-[400px]">
+                        {teacher.availability && teacher.availability.length > 0 ? (
+                          teacher.availability.map((slot, idx) => (
+                            <span key={idx} className="bg-destructive/10 text-destructive border border-destructive/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap">
+                              {DAYS[slot.day].substring(0, 3)} {SLOTS[slot.slot]}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                            Always Available
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    {isAdmin && (
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2 transition-opacity">
+                          <button
+                            onClick={() => openModal(teacher)}
+                            className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => onDelete(teacher.id)}
+                            className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
 
       {/* Modal */}
@@ -205,7 +205,7 @@ export function TeachersTable({
                         placeholder="e.g. John Smith"
                       />
                     </div>
-                    
+
                     <div className="space-y-4">
                       <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Select Busy Slots (Constraints)</label>
                       <div className="bg-muted/30 p-4 rounded-2xl border border-border">
@@ -236,7 +236,7 @@ export function TeachersTable({
                         </div>
                       </div>
                     </div>
-                    
+
                     <button
                       type="submit"
                       className="w-full px-4 py-4 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
@@ -249,7 +249,7 @@ export function TeachersTable({
                 {/* Right Side: Assignments (Only if editing) */}
                 <div className="space-y-6">
                   <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Course Assignments (Distributions)</h4>
-                  
+
                   {!editingTeacher ? (
                     <div className="bg-muted/30 border border-dashed border-border rounded-2xl p-8 text-center text-muted-foreground">
                       Save teacher first to manage assignments.
@@ -261,9 +261,9 @@ export function TeachersTable({
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold uppercase text-muted-foreground">Subject</label>
-                            <select 
+                            <select
                               value={assignmentForm.subject_id}
-                              onChange={e => setAssignmentForm({...assignmentForm, subject_id: parseInt(e.target.value)})}
+                              onChange={e => setAssignmentForm({ ...assignmentForm, subject_id: parseInt(e.target.value) })}
                               className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm"
                             >
                               {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -271,9 +271,9 @@ export function TeachersTable({
                           </div>
                           <div className="space-y-1">
                             <label className="text-[10px] font-bold uppercase text-muted-foreground">Class</label>
-                            <select 
+                            <select
                               value={assignmentForm.class_id}
-                              onChange={e => setAssignmentForm({...assignmentForm, class_id: parseInt(e.target.value)})}
+                              onChange={e => setAssignmentForm({ ...assignmentForm, class_id: parseInt(e.target.value) })}
                               className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm"
                             >
                               {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -283,15 +283,15 @@ export function TeachersTable({
                         <div className="flex items-end gap-4">
                           <div className="space-y-1 flex-1">
                             <label className="text-[10px] font-bold uppercase text-muted-foreground">Weekly Hours</label>
-                            <input 
+                            <input
                               type="number"
                               min="1" max="10"
                               value={assignmentForm.weekly_hours}
-                              onChange={e => setAssignmentForm({...assignmentForm, weekly_hours: parseInt(e.target.value)})}
+                              onChange={e => setAssignmentForm({ ...assignmentForm, weekly_hours: parseInt(e.target.value) })}
                               className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm"
                             />
                           </div>
-                          <button 
+                          <button
                             onClick={handleAddAssignment}
                             className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-bold hover:bg-primary/90 flex items-center gap-2"
                           >
@@ -315,7 +315,7 @@ export function TeachersTable({
                                 </div>
                               </div>
                             </div>
-                            <button 
+                            <button
                               onClick={() => onDeleteCourse(course.id)}
                               className="p-2 text-destructive opacity-0 group-hover:opacity-100 hover:bg-destructive/10 rounded-lg transition-all"
                             >

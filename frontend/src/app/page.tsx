@@ -207,6 +207,9 @@ export default function Home() {
                 teachers={teachers} 
                 classes={classes} 
                 selectedClassId={selectedClassId} 
+                onGenerate={generateSchedule}
+                loading={loading}
+                isAdmin={isAdmin()}
               />
             )}
 

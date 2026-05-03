@@ -69,12 +69,6 @@ export function Header({ onRefresh, onGenerate, loading, activeTab, setActiveTab
             </button>
           </div>
 
-          {(activeTab === 'schedule' && isAdmin) && (
-            <Button size="lg" onClick={onGenerate} disabled={loading} className="gap-2 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 h-11 rounded-xl w-full md:w-auto">
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? "Generating..." : "Generate"}
-            </Button>
-          )}
         </div>
       </div>
 

@@ -60,7 +60,7 @@ export function ClassesGrid({ classes, onUpdate, onDelete, onCreate, isAdmin }: 
         {classes.map(c => (
           <div key={c.id} className="group p-6 bg-card border border-border rounded-2xl hover:shadow-2xl hover:shadow-primary/5 hover:border-primary/20 transition-all relative overflow-hidden">
             {isAdmin && (
-              <div className="absolute top-0 right-0 p-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-0 right-0 p-2 flex gap-1 transition-opacity">
                 <button
                   onClick={() => openModal(c)}
                   className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"

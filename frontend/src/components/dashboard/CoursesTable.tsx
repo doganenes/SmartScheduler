@@ -92,7 +92,7 @@ export function CoursesTable({ subjects, onUpdate, onDelete, onCreate, isAdmin }
               </div>
 
               {isAdmin && (
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-1 transition-opacity">
                   <button
                     onClick={() => openModal(subject)}
                     className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"

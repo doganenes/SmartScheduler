@@ -1,15 +1,19 @@
-import { GraduationCap, Users } from 'lucide-react';
+import { GraduationCap, Users, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Teacher, SchoolClass, ScheduleEntry, DAYS, SLOTS } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 
 interface ScheduleGridProps {
   schedule: ScheduleEntry[];
   teachers: Teacher[];
   classes: SchoolClass[];
   selectedClassId: number | 'all';
+  onGenerate: () => Promise<void>;
+  loading: boolean;
+  isAdmin: boolean;
 }
 
-export function ScheduleGrid({ schedule, teachers, classes, selectedClassId }: ScheduleGridProps) {
+export function ScheduleGrid({ schedule, teachers, classes, selectedClassId, onGenerate, loading, isAdmin }: ScheduleGridProps) {
   const getEntryAt = (day: number, slot: number) => {
     return schedule.find(s => 
       s.day === day && 
@@ -21,13 +25,39 @@ export function ScheduleGrid({ schedule, teachers, classes, selectedClassId }: S
   return (
     <Card className="border-none shadow-2xl bg-card/50 backdrop-blur-sm overflow-hidden">
       <CardHeader className="pb-4">
-        <div>
-          <CardTitle className="text-2xl">Weekly Timetable</CardTitle>
-          <CardDescription>
-            {selectedClassId !== 'all' 
-              ? `Course distribution for class ${classes.find(c => c.id === selectedClassId)?.name}.` 
-              : "Program for all classes (for conflict checking)."}
-          </CardDescription>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <div className="flex items-center gap-4">
+              <CardTitle className="text-2xl">Weekly Timetable</CardTitle>
+              {isAdmin && (
+                <Button 
+                  size="sm" 
+                  onClick={onGenerate} 
+                  disabled={loading} 
+                  className="gap-2 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 rounded-xl hidden sm:flex h-9"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                  {loading ? "Generating..." : "Generate"}
+                </Button>
+              )}
+            </div>
+            <CardDescription className="mt-1">
+              {selectedClassId !== 'all' 
+                ? `Course distribution for class ${classes.find(c => c.id === selectedClassId)?.name}.` 
+                : "Program for all classes (for conflict checking)."}
+            </CardDescription>
+          </div>
+          
+          {isAdmin && (
+            <Button 
+              onClick={onGenerate} 
+              disabled={loading} 
+              className="gap-2 shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 rounded-xl flex sm:hidden w-full"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? "Generating..." : "Generate Schedule"}
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent>
