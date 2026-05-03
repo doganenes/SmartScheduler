@@ -1,432 +1,304 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import { 
+  Plus, Search, Edit2, Trash2, GraduationCap, Mail, Phone, 
+  BookOpen, Calendar, Clock, X, Check, AlertCircle, ChevronRight,
+  MoreVertical, UserPlus, Filter, Download
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Teacher, DAYS, SLOTS, Course, Subject, SchoolClass } from "@/lib/types";
-import { Edit2, Trash2, Plus, X, GraduationCap, Clock, Pencil, Save } from "lucide-react";
+import { Teacher, Course, Subject, SchoolClass } from "@/lib/types";
 
 interface TeachersTableProps {
   teachers: Teacher[];
   subjects: Subject[];
   classes: SchoolClass[];
   courses: Course[];
+  onCreate: (data: any) => Promise<void>;
   onUpdate: (id: number, data: any) => Promise<void>;
-  onDelete: (id: number) => void | Promise<void>;
-  onCreate: (data: any) => Promise<any>;
-  onCreateCourse: (data: any, silent?: boolean) => Promise<any>;
-  onUpdateCourse: (id: number, data: any, silent?: boolean) => Promise<void>;
-  onDeleteCourse: (id: number) => void | Promise<void>;
+  onDelete: (id: number) => void;
+  onCreateCourse: (data: any) => Promise<void>;
+  onUpdateCourse: (id: number, data: any) => Promise<void>;
+  onDeleteCourse: (id: number) => void;
   onRefresh: () => Promise<void>;
   isAdmin: boolean;
 }
 
-export function TeachersTable({
-  teachers, subjects, classes, courses,
-  onUpdate, onDelete, onCreate,
-  onCreateCourse, onUpdateCourse, onDeleteCourse,
+export function TeachersTable({ 
+  teachers, 
+  subjects, 
+  classes, 
+  courses,
+  onCreate, 
+  onUpdate, 
+  onDelete,
+  onCreateCourse,
+  onUpdateCourse,
+  onDeleteCourse,
   onRefresh,
-  isAdmin
+  isAdmin 
 }: TeachersTableProps) {
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    availability: [] as { day: number, slot: number }[]
+    email: '',
+    phone: ''
   });
 
-  const [editingAssignmentId, setEditingAssignmentId] = useState<number | null>(null);
-  const [assignmentForm, setAssignmentForm] = useState({
-    subject_id: subjects[0]?.id || 0,
-    class_id: classes[0]?.id || 0,
-    weekly_hours: 2
-  });
-  const [pendingAssignments, setPendingAssignments] = useState<{ subject_id: number, weekly_hours: number }[]>([]);
+  const filteredTeachers = teachers.filter(t => 
+    t.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
-      name: formData.name,
-      availability: formData.availability
-    };
-
     if (editingTeacher) {
-      await onUpdate(editingTeacher.id, data);
+      await onUpdate(editingTeacher.id, formData);
     } else {
-      const newTeacher = await onCreate(data);
-      if (newTeacher && pendingAssignments.length > 0) {
-        // Bulk creation with silent mode to prevent rate limiting
-        for (const pa of pendingAssignments) {
-          for (const cls of classes) {
-            await onCreateCourse({
-              subject_id: pa.subject_id,
-              teacher_id: newTeacher.id,
-              class_id: cls.id,
-              weekly_hours: pa.weekly_hours
-            }, true);
-          }
-        }
-        await onRefresh();
-      }
+      await onCreate(formData);
     }
-    setPendingAssignments([]);
-    closeModal();
+    setIsModalOpen(false);
+    setEditingTeacher(null);
+    setFormData({ name: '', email: '', phone: '' });
   };
 
-  const handleEditAssignment = (course: Course) => {
-    setEditingAssignmentId(course.id);
-    setAssignmentForm({
-      subject_id: course.subject_id,
-      class_id: course.class_id,
-      weekly_hours: course.weekly_hours
+  const handleEdit = (teacher: Teacher) => {
+    setEditingTeacher(teacher);
+    setFormData({
+      name: teacher.name,
+      email: '', // Not in current model but for future
+      phone: ''
     });
-  };
-
-  const toggleSlot = (day: number, slot: number) => {
-    const exists = formData.availability.find(s => s.day === day && s.slot === slot);
-    if (exists) {
-      setFormData({
-        ...formData,
-        availability: formData.availability.filter(s => !(s.day === day && s.slot === slot))
-      });
-    } else {
-      setFormData({
-        ...formData,
-        availability: [...formData.availability, { day, slot }]
-      });
-    }
-  };
-
-  const openModal = (teacher?: Teacher) => {
-    if (teacher) {
-      setEditingTeacher(teacher);
-      setFormData({
-        name: teacher.name,
-        availability: teacher.availability || []
-      });
-    } else {
-      setEditingTeacher(null);
-      setFormData({ name: '', availability: [] });
-    }
     setIsModalOpen(true);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingTeacher(null);
-    setFormData({ name: '', availability: [] });
-  };
 
   return (
-    <Card className="border-none shadow-xl">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Teacher List</CardTitle>
-          <CardDescription>Teachers registered in the system and their assignments.</CardDescription>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input 
+            type="text" 
+            placeholder="Search teachers..."
+            className="w-full pl-11 pr-4 py-3 bg-card border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
+        
         {isAdmin && (
-          <button
-            onClick={() => openModal()}
-            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Add Teacher
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => {
+                setEditingTeacher(null);
+                setFormData({ name: '', email: '', phone: '' });
+                setIsModalOpen(true);
+              }}
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Add Teacher</span>
+            </button>
+          </div>
         )}
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[200px]">Full Name</TableHead>
-                <TableHead>Lectures</TableHead>
-                <TableHead>Busy Times</TableHead>
-                {isAdmin && <TableHead className="text-right">Actions</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {teachers.map((teacher) => {
-                const teacherCourses = courses.filter(c => c.teacher_id === teacher.id);
-                return (
-                  <TableRow key={teacher.id} className="hover:bg-muted/50 group">
-                    <TableCell className="font-bold text-foreground">{teacher.name}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1.5">
-                        {Array.from(new Set(teacherCourses.map(c => c.subject.name))).map(subjectName => (
-                          <span key={subjectName} className="bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider">
-                            {subjectName}
-                          </span>
-                        ))}
-                        {teacherCourses.length === 0 && <span className="text-muted-foreground text-xs italic">No assignments</span>}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1.5 max-w-[400px]">
-                        {teacher.availability && teacher.availability.length > 0 ? (
-                          teacher.availability.map((slot, idx) => (
-                            <span key={idx} className="bg-destructive/10 text-destructive border border-destructive/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap">
-                              {DAYS[slot.day].substring(0, 3)} {SLOTS[slot.slot]}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
-                            Always Available
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    {isAdmin && (
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2 transition-opacity">
-                          <button
-                            onClick={() => openModal(teacher)}
-                            className="p-2 hover:bg-primary/10 text-primary rounded-lg transition-colors"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => onDelete(teacher.id)}
-                            className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
+      </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-2 sm:p-4 overflow-y-auto sm:items-center pt-8 sm:pt-0">
-          <div className="bg-background border border-border w-full max-w-5xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
-              <h3 className="font-bold text-xl">{editingTeacher ? `Edit Teacher: ${editingTeacher.name}` : 'Add New Teacher'}</h3>
-              <button onClick={closeModal} className="text-muted-foreground hover:text-foreground">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Left Side: General Info & Availability */}
-                <div className="space-y-6">
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Full Name</label>
-                      <input
-                        required
-                        value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                        placeholder="e.g. John Smith"
-                      />
-                    </div>
-
-                    <div className="space-y-4">
-                      <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Select Busy Slots (Constraints)</label>
-                      <div className="bg-muted/30 p-4 rounded-2xl border border-border">
-                        <div className="grid grid-cols-6 gap-1">
-                          <div className="h-8"></div>
-                          {DAYS.map(day => <div key={day} className="text-[10px] font-bold text-center text-muted-foreground uppercase">{day.substring(0, 3)}</div>)}
-
-                          {SLOTS.map((time, sIdx) => (
-                            <React.Fragment key={time}>
-                              <div className="text-[10px] font-bold flex items-center pr-2 text-muted-foreground">{time}</div>
-                              {DAYS.map((_, dIdx) => {
-                                const isBusy = formData.availability.some(s => s.day === dIdx && s.slot === sIdx);
-                                return (
-                                  <div
-                                    key={`${dIdx}-${sIdx}`}
-                                    onClick={() => toggleSlot(dIdx, sIdx)}
-                                    className={`h-8 rounded-md cursor-pointer transition-all border ${isBusy
-                                      ? 'bg-destructive text-white border-destructive'
-                                      : 'bg-background hover:bg-primary/10 border-border'
-                                      } flex items-center justify-center text-[8px] font-bold`}
-                                  >
-                                    {isBusy ? 'BUSY' : ''}
-                                  </div>
-                                );
-                              })}
-                            </React.Fragment>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="w-full px-4 py-4 rounded-xl font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
-                    >
-                      {editingTeacher ? 'Update Teacher Info' : 'Create Teacher'}
-                    </button>
-                  </form>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredTeachers.map((teacher, idx) => (
+          <Card key={teacher.id} className="group border-none shadow-xl bg-card/50 hover:bg-card transition-all duration-300 animate-in fade-in slide-in-from-bottom-4" style={{ animationDelay: `${idx * 50}ms` }}>
+            <CardContent className="p-6">
+              <div className="flex justify-between items-start mb-6">
+                <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform duration-500">
+                  <GraduationCap size={28} />
                 </div>
+                {isAdmin && (
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => handleEdit(teacher)}
+                      className="p-2 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button 
+                      onClick={() => onDelete(teacher.id)}
+                      className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
 
-                {/* Right Side: Assignments */}
-                <div className="space-y-6">
-                  <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Course Assignments (Distributions)</h4>
+              <div className="space-y-1 mb-6">
+                <h3 className="font-black text-xl tracking-tight text-foreground group-hover:text-primary transition-colors">
+                  {teacher.name}
+                </h3>
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em]">Academic Staff</p>
+              </div>
 
-                  <div className="space-y-4">
-                    {/* Add Assignment Form */}
-                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Subject</label>
-                          <select
-                            value={assignmentForm.subject_id}
-                            onChange={e => setAssignmentForm({ ...assignmentForm, subject_id: parseInt(e.target.value) })}
-                            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm"
-                          >
-                            {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                          </select>
+              <div className="space-y-4 pt-4 border-t border-border/50">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Course Assignments</h4>
+                </div>
+                
+                <div className="space-y-2">
+                  {courses.filter(c => c.teacher_id === teacher.id).map(course => (
+                    <div key={course.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border border-border/50 group/item hover:border-primary/30 transition-all">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                          <BookOpen size={14} />
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground">Weekly Hours (Per Class)</label>
-                          <input
-                            type="number"
-                            min="1" max="10"
-                            value={assignmentForm.weekly_hours}
-                            onChange={e => setAssignmentForm({ ...assignmentForm, weekly_hours: parseInt(e.target.value) })}
-                            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm"
-                          />
+                        <div>
+                          <p className="text-xs font-bold text-foreground">{course.subject.name}</p>
+                          <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">
+                            {classes.find(cls => cls.id === course.class_id)?.name} • {course.weekly_hours}h
+                          </p>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={async () => {
-                            if (editingAssignmentId) {
-                              // UPDATE MODE (Single assignment)
-                              await onUpdateCourse(editingAssignmentId, {
-                                subject_id: assignmentForm.subject_id,
-                                teacher_id: editingTeacher?.id || 0,
-                                class_id: assignmentForm.class_id,
-                                weekly_hours: assignmentForm.weekly_hours
-                              });
-                              setEditingAssignmentId(null);
-                            } else if (editingTeacher) {
-                              // ADD MODE for existing teacher (Bulk all classes)
-                              for (const cls of classes) {
-                                await onCreateCourse({
-                                  subject_id: assignmentForm.subject_id,
-                                  teacher_id: editingTeacher.id,
-                                  class_id: cls.id,
-                                  weekly_hours: assignmentForm.weekly_hours
-                                }, true);
-                              }
-                              await onRefresh();
-                            } else {
-                              // ADD MODE for NEW teacher (Local state)
-                              setPendingAssignments([...pendingAssignments, { 
-                                subject_id: assignmentForm.subject_id, 
-                                weekly_hours: assignmentForm.weekly_hours 
-                              }]);
-                            }
-                            
-                            setAssignmentForm({
-                              subject_id: subjects[0]?.id || 0,
-                              class_id: classes[0]?.id || 0,
-                              weekly_hours: 2
-                            });
-                          }}
-                          className="w-full bg-primary text-primary-foreground px-4 py-3 rounded-xl text-sm font-bold hover:bg-primary/90 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all"
-                        >
-                          {editingAssignmentId ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                          {editingAssignmentId ? 'Save Changes' : 'Add Subject to All Classes'}
-                        </button>
-
-                        {editingAssignmentId && (
-                          <button
-                            onClick={() => {
-                              setEditingAssignmentId(null);
-                              setAssignmentForm({
-                                subject_id: subjects[0]?.id || 0,
-                                class_id: classes[0]?.id || 0,
-                                weekly_hours: 2
-                              });
-                            }}
-                            className="w-full bg-muted text-muted-foreground px-4 py-2 rounded-xl text-xs font-medium hover:bg-muted/80 transition-all"
+                      
+                      {isAdmin && (
+                        <div className="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => onDeleteCourse(course.id)}
+                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all"
                           >
-                            Cancel Editing
+                            <Trash2 size={12} />
                           </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Assignments List */}
-                    <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                      {/* 1. Existing Assignments (for editing mode) */}
-                      {editingTeacher && courses.filter(c => c.teacher_id === editingTeacher.id).map(course => (
-                        <div key={course.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${editingAssignmentId === course.id ? 'bg-primary/5 border-primary ring-1 ring-primary/20' : 'bg-muted/50 border-border'}`}>
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${editingAssignmentId === course.id ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'}`}>
-                              <GraduationCap className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <div className="font-bold text-sm">{course.subject.name}</div>
-                              <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                                {classes.find(c => c.id === course.class_id)?.name} • {course.weekly_hours} Hours
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleEditAssignment(course)}
-                              className={`p-2 rounded-lg transition-all ${editingAssignmentId === course.id ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary hover:bg-primary/10'}`}
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => onDeleteCourse(course.id)}
-                              className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-all"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* 2. Pending Assignments (for new teacher mode) */}
-                      {!editingTeacher && pendingAssignments.map((pa, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 rounded-xl border bg-primary/5 border-primary/20">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
-                              <GraduationCap className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <div className="font-bold text-sm">{subjects.find(s => s.id === pa.subject_id)?.name}</div>
-                              <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                                All Classes • {pa.weekly_hours} Hours
-                              </div>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => setPendingAssignments(pendingAssignments.filter((_, i) => i !== idx))}
-                            className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-all"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-
-                      {/* Empty State */}
-                      {((editingTeacher && courses.filter(c => c.teacher_id === editingTeacher.id).length === 0) || 
-                        (!editingTeacher && pendingAssignments.length === 0)) && (
-                        <div className="text-center py-8 text-muted-foreground text-sm italic">
-                          No assignments yet.
                         </div>
                       )}
                     </div>
-                  </div>
+                  ))}
+                  
+                  {courses.filter(c => c.teacher_id === teacher.id).length === 0 && (
+                    <p className="text-[10px] text-muted-foreground italic text-center py-2">No assignments yet.</p>
+                  )}
                 </div>
+
+                {isAdmin && (
+                  <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Quick Assignment</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-muted-foreground uppercase">Subject</label>
+                        <select 
+                          id={`subject-select-${teacher.id}`}
+                          className="w-full bg-muted/50 border border-border rounded-lg px-2 py-1.5 text-[10px] font-bold"
+                        >
+                          {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-muted-foreground uppercase">Hours</label>
+                        <input 
+                          id={`hours-input-${teacher.id}`}
+                          type="number" 
+                          defaultValue={2}
+                          min={1}
+                          max={10}
+                          className="w-full bg-muted/50 border border-border rounded-lg px-2 py-1.5 text-[10px] font-bold"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-2">
+                      <select 
+                        id={`class-select-${teacher.id}`}
+                        className="w-full bg-muted/50 border border-border rounded-lg px-2 py-1.5 text-[10px] font-bold"
+                      >
+                        <option value="all">Add Subject to All Classes</option>
+                        {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                      
+                      <button 
+                        onClick={async () => {
+                          const subjectId = parseInt((document.getElementById(`subject-select-${teacher.id}`) as HTMLSelectElement).value);
+                          const hours = parseInt((document.getElementById(`hours-input-${teacher.id}`) as HTMLInputElement).value);
+                          const classVal = (document.getElementById(`class-select-${teacher.id}`) as HTMLSelectElement).value;
+                          
+                          if (classVal === 'all') {
+                            for (const cls of classes) {
+                              await onCreateCourse({
+                                teacher_id: teacher.id,
+                                subject_id: subjectId,
+                                class_id: cls.id,
+                                weekly_hours: hours
+                              });
+                            }
+                          } else {
+                            await onCreateCourse({
+                              teacher_id: teacher.id,
+                              subject_id: subjectId,
+                              class_id: parseInt(classVal),
+                              weekly_hours: hours
+                            });
+                          }
+                        }}
+                        className="w-full py-2 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground rounded-lg text-[10px] font-black uppercase tracking-wider transition-all"
+                      >
+                        Assign Subject
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-lg border-none shadow-2xl animate-in zoom-in-95 duration-200">
+            <CardHeader className="border-b border-border/50 pb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl font-black tracking-tight">
+                    {editingTeacher ? 'Edit Teacher' : 'Add New Teacher'}
+                  </CardTitle>
+                  <CardDescription>Enter the professional details for the staff member.</CardDescription>
+                </div>
+                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-muted rounded-full transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-8 px-8 pb-8">
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <label className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Full Name</label>
+                    <input 
+                      required
+                      type="text" 
+                      placeholder="e.g. Dr. John Smith"
+                      className="w-full px-5 py-4 bg-muted/30 border border-border/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-bold text-lg"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    />
+                  </div>
+
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button 
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-xs border border-border hover:bg-muted transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="flex-1 bg-primary text-primary-foreground py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                  >
+                    {editingTeacher ? 'Update Staff' : 'Save Member'}
+                  </button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       )}
-    </Card>
+    </div>
   );
 }
