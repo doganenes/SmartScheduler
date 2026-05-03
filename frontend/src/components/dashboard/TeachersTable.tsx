@@ -421,8 +421,7 @@ export function TeachersTable({
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
     </Card>
   );
 }
