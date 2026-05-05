@@ -42,7 +42,8 @@ export function TeachersTable({
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    availability: [] as { day: number; slot: number }[]
   });
 
   const filteredTeachers = teachers.filter(t => 
@@ -58,17 +59,35 @@ export function TeachersTable({
     }
     setIsModalOpen(false);
     setEditingTeacher(null);
-    setFormData({ name: '', email: '', phone: '' });
+    setFormData({ name: '', email: '', phone: '', availability: [] });
   };
 
   const handleEdit = (teacher: Teacher) => {
     setEditingTeacher(teacher);
     setFormData({
       name: teacher.name,
-      email: '', // Not in current model but for future
-      phone: ''
+      email: '', 
+      phone: '',
+      availability: teacher.availability || []
     });
     setIsModalOpen(true);
+  };
+
+  const toggleAvailability = (day: number, slot: number) => {
+    setFormData(prev => {
+      const exists = prev.availability.find(a => a.day === day && a.slot === slot);
+      if (exists) {
+        return {
+          ...prev,
+          availability: prev.availability.filter(a => !(a.day === day && a.slot === slot))
+        };
+      } else {
+        return {
+          ...prev,
+          availability: [...prev.availability, { day, slot }]
+        };
+      }
+    });
   };
 
 
@@ -91,7 +110,7 @@ export function TeachersTable({
             <button 
               onClick={() => {
                 setEditingTeacher(null);
-                setFormData({ name: '', email: '', phone: '' });
+                setFormData({ name: '', email: '', phone: '', availability: [] });
                 setIsModalOpen(true);
               }}
               className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
@@ -137,53 +156,62 @@ export function TeachersTable({
               </div>
 
               <div className="space-y-4 pt-4 border-t border-border/50">
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {Array.from(new Set(courses.filter(c => c.teacher_id === teacher.id).map(c => c.subject.name))).map(subjectName => (
-                    <span 
-                      key={subjectName}
-                      className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-wider border border-primary/20"
-                    >
-                      {subjectName}
-                    </span>
-                  ))}
-                  {courses.filter(c => c.teacher_id === teacher.id).length === 0 && (
-                    <span className="text-[10px] text-muted-foreground italic font-medium">No specialties assigned</span>
-                  )}
-                </div>
-
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70">Current Schedule</h4>
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Course Assignments</h4>
                 </div>
                 
                 <div className="space-y-2">
                   {courses.filter(c => c.teacher_id === teacher.id).map(course => (
-                    <div key={course.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border border-border/50 group/item hover:border-primary/30 transition-all duration-300">
+                    <div key={course.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-xl border border-border/50 group/item hover:border-primary/30 transition-all">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-card rounded-lg flex items-center justify-center text-primary border border-border shadow-sm group-hover/item:scale-110 transition-transform">
+                        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
                           <BookOpen size={14} />
                         </div>
                         <div>
                           <p className="text-xs font-bold text-foreground">{course.subject.name}</p>
-                          <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider flex items-center gap-1">
-                            <span>{classes.find(cls => cls.id === course.class_id)?.name}</span>
-                            <span className="w-1 h-1 bg-muted-foreground/30 rounded-full" />
-                            <span>{course.weekly_hours}h / week</span>
+                          <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-wider">
+                            {classes.find(cls => cls.id === course.class_id)?.name}
                           </p>
                         </div>
                       </div>
                       
-                      {isAdmin && (
-                        <div className="flex gap-1 opacity-0 group-hover/item:opacity-100 transition-all duration-300 transform translate-x-2 group-hover/item:translate-x-0">
-                          <button 
-                            onClick={() => onDeleteCourse(course.id)}
-                            className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {isAdmin && (
+                          <div className="flex items-center gap-1 bg-background/50 rounded-lg border border-border/50 p-1">
+                            <input 
+                              type="number"
+                              min="1"
+                              max="40"
+                              defaultValue={course.weekly_hours}
+                              onBlur={(e) => {
+                                const val = parseInt(e.target.value);
+                                if (val !== course.weekly_hours) {
+                                  onUpdateCourse(course.id, { ...course, weekly_hours: val });
+                                }
+                              }}
+                              className="w-10 bg-transparent text-[10px] font-black text-center focus:outline-none"
+                            />
+                            <span className="text-[8px] font-bold text-muted-foreground uppercase pr-1">hr</span>
+                          </div>
+                        )}
+                        
+                        {isAdmin && (
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button 
+                              onClick={() => onDeleteCourse(course.id)}
+                              className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-all"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
+                  
+                  {courses.filter(c => c.teacher_id === teacher.id).length === 0 && (
+                    <p className="text-[10px] text-muted-foreground italic text-center py-2">No assignments yet.</p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -221,6 +249,52 @@ export function TeachersTable({
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Busy Time (Select Unavailable Slots)</label>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-destructive/20 border border-destructive/30 rounded" />
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Busy</span>
+                      </div>
+                    </div>
+                    
+                    <div className="overflow-x-auto pb-2">
+                      <table className="w-full border-separate border-spacing-1">
+                        <thead>
+                          <tr>
+                            <th className="w-10"></th>
+                            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map(day => (
+                              <th key={day} className="text-[9px] font-black uppercase text-muted-foreground/50 pb-2">{day}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[...Array(8)].map((_, slot) => (
+                            <tr key={slot}>
+                              <td className="text-[9px] font-black text-muted-foreground/40 text-right pr-2">S{slot + 1}</td>
+                              {[...Array(5)].map((_, day) => {
+                                const isBusy = formData.availability.find(a => a.day === day && a.slot === slot);
+                                return (
+                                  <td key={day}>
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleAvailability(day, slot)}
+                                      className={`w-full aspect-square rounded-lg border-2 transition-all duration-200 ${
+                                        isBusy 
+                                          ? 'bg-destructive/20 border-destructive shadow-sm shadow-destructive/20' 
+                                          : 'bg-muted/30 border-transparent hover:border-primary/30'
+                                      }`}
+                                    />
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
 
                 </div>
