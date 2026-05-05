@@ -216,7 +216,6 @@ export function TeachersTable({
               </div>
             </CardContent>
           </Card>
-
         ))}
       </div>
 
