@@ -40,7 +40,6 @@ export function TeachersTable({
     class_id: classes[0]?.id || 0,
     weekly_hours: 2
   });
-  const [pendingAssignments, setPendingAssignments] = useState<{ subject_id: number, weekly_hours: number }[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,22 +51,8 @@ export function TeachersTable({
     if (editingTeacher) {
       await onUpdate(editingTeacher.id, data);
     } else {
-      const newTeacher = await onCreate(data);
-      if (newTeacher && pendingAssignments.length > 0) {
-        for (const pa of pendingAssignments) {
-          for (const cls of classes) {
-            await onCreateCourse({
-              subject_id: pa.subject_id,
-              teacher_id: newTeacher.id,
-              class_id: cls.id,
-              weekly_hours: pa.weekly_hours
-            }, true);
-          }
-        }
-        await onRefresh();
-      }
+      await onCreate(data);
     }
-    setPendingAssignments([]);
     closeModal();
   };
 
@@ -89,21 +74,6 @@ export function TeachersTable({
         class_id: assignmentForm.class_id,
         weekly_hours: assignmentForm.weekly_hours
       });
-    } else if (editingTeacher) {
-      for (const cls of classes) {
-        await onCreateCourse({
-          subject_id: assignmentForm.subject_id,
-          teacher_id: editingTeacher.id,
-          class_id: cls.id,
-          weekly_hours: assignmentForm.weekly_hours
-        }, true);
-      }
-      await onRefresh();
-    } else {
-      setPendingAssignments([...pendingAssignments, {
-        subject_id: assignmentForm.subject_id,
-        weekly_hours: assignmentForm.weekly_hours
-      }]);
     }
     setIsAssignmentModalOpen(false);
     setEditingAssignmentId(null);
@@ -300,20 +270,6 @@ export function TeachersTable({
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Course Assignments</h4>
-                    <button 
-                      onClick={() => {
-                        setEditingAssignmentId(null);
-                        setAssignmentForm({
-                          subject_id: subjects[0]?.id || 0,
-                          class_id: classes[0]?.id || 0,
-                          weekly_hours: 2
-                        });
-                        setIsAssignmentModalOpen(true);
-                      }}
-                      className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
-                    >
-                      <Plus className="w-3 h-3" /> Add Assignment
-                    </button>
                   </div>
 
                   <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
@@ -347,30 +303,7 @@ export function TeachersTable({
                       </div>
                     ))}
 
-                    {!editingTeacher && pendingAssignments.map((pa, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 rounded-xl border bg-primary/5 border-primary/20">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
-                            <GraduationCap className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <div className="font-bold text-sm">{subjects.find(s => s.id === pa.subject_id)?.name}</div>
-                            <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                              All Classes • {pa.weekly_hours} Hours
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => setPendingAssignments(pendingAssignments.filter((_, i) => i !== idx))}
-                          className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-all"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-
-                    {((editingTeacher && courses.filter(c => c.teacher_id === editingTeacher.id).length === 0) ||
-                      (!editingTeacher && pendingAssignments.length === 0)) && (
+                    {(editingTeacher && courses.filter(c => c.teacher_id === editingTeacher.id).length === 0) && (
                         <div className="text-center py-8 text-muted-foreground text-sm italic">
                           No assignments yet.
                         </div>
@@ -416,7 +349,7 @@ export function TeachersTable({
                     onClick={handleSaveAssignment}
                     className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all"
                   >
-                    {editingAssignmentId ? 'Save Changes' : (editingTeacher ? 'Add to All Classes' : 'Add to List')}
+                    Save Changes
                   </button>
                 </div>
               </div>
